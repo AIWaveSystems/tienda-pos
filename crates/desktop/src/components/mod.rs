@@ -3,6 +3,7 @@ pub mod card;
 pub mod confirm;
 pub mod dialog;
 pub mod field;
+pub mod list;
 pub mod loading;
 pub mod notice;
 pub mod paginator;
