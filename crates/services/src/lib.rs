@@ -3,3 +3,5 @@ pub use error::{Result, ServiceError};
 mod auth;
 pub mod format;
 pub use auth::{AuthService, UserDraft};
+pub mod category;
+pub use category::CategoryService;
