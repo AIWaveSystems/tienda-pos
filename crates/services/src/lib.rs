@@ -5,3 +5,5 @@ pub mod format;
 pub use auth::{AuthService, UserDraft};
 pub mod category;
 pub use category::CategoryService;
+pub mod client;
+pub use client::ClientService;
