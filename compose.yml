@@ -7,6 +7,10 @@ services:
       MYSQL_USER: pos
       MYSQL_PASSWORD: "p@ss:w/rd"
     ports: ["127.0.0.1:33306:3306"]
+    healthcheck:
+      test: ["CMD-SHELL", "mysql -h127.0.0.1 -upos -p'p@ss:w/rd' pos -e 'SELECT 1'"]
+      interval: 3s
+      retries: 40
   postgres:
     image: postgres:16
     environment:
@@ -14,9 +18,17 @@ services:
       POSTGRES_USER: pos
       POSTGRES_PASSWORD: "p@ss:w/rd"
     ports: ["127.0.0.1:35432:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U pos -d pos"]
+      interval: 3s
+      retries: 40
   mongo:
     image: mongo:7
     environment:
       MONGO_INITDB_ROOT_USERNAME: pos
       MONGO_INITDB_ROOT_PASSWORD: "p@ss:w/rd"
     ports: ["127.0.0.1:37017:27017"]
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.adminCommand({ping:1})'"]
+      interval: 3s
+      retries: 40
