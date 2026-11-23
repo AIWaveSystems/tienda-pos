@@ -13,4 +13,6 @@ pub mod sales;
 pub use sales::{SaleFilter, SalesService};
 pub mod report;
 pub use report::ReportService;
+mod context;
 pub mod print;
+pub use context::Services;
