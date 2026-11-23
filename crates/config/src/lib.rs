@@ -11,3 +11,5 @@ pub mod model;
 pub use model::AppConfig;
 mod sanitize;
 pub use sanitize::sanitize;
+mod store;
+pub use store::ConfigStore;
