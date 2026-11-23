@@ -12,6 +12,7 @@ authors = ["Ilesandres", "Claude (Anthropic)"]
 pos-domain = { path = "crates/domain" }
 pos-config = { path = "crates/config" }
 pos-storage = { path = "crates/storage" }
+pos-services = { path = "crates/services" }
 chrono = { version = "0.4", features = ["serde"] }
 rust_decimal = { version = "1", features = ["serde-with-float"] }
 serde = { version = "1", features = ["derive"] }

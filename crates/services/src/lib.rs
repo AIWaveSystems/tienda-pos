@@ -1,0 +1,18 @@
+mod error;
+pub use error::{Result, ServiceError};
+mod auth;
+pub mod format;
+pub use auth::{AuthService, UserDraft};
+pub mod category;
+pub use category::CategoryService;
+pub mod client;
+pub use client::ClientService;
+pub mod inventory;
+pub use inventory::InventoryService;
+pub mod sales;
+pub use sales::{SaleFilter, SalesService};
+pub mod report;
+pub use report::ReportService;
+mod context;
+pub mod print;
+pub use context::Services;

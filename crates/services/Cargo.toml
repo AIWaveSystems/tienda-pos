@@ -1,0 +1,21 @@
+[package]
+name = "pos-services"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+chrono.workspace = true
+open = "5"
+pos-config.workspace = true
+pos-domain.workspace = true
+pos-storage.workspace = true
+rust_decimal.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+tempfile = "3"
+
+[lints]
+workspace = true
