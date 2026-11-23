@@ -6,3 +6,5 @@ mod entity;
 pub use entity::Entity;
 mod category;
 pub use category::Category;
+mod client;
+pub use client::Client;
