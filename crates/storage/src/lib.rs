@@ -6,3 +6,5 @@ mod store;
 pub use store::Store;
 pub mod document;
 pub use document::{DocumentStore, FileBackend};
+pub mod sql;
+pub use sql::{SqlConnection, SqlStore};
