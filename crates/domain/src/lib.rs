@@ -4,3 +4,5 @@ pub mod clock;
 pub use clock::now;
 mod entity;
 pub use entity::Entity;
+mod category;
+pub use category::Category;
