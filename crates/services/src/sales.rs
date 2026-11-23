@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use std::sync::Arc;
 
-use pos_domain::{Client, Product, Sale};
+use pos_domain::{Client, Sale};
 use pos_storage::Store;
 use rust_decimal::Decimal;
 
@@ -31,32 +31,9 @@ impl SalesService {
         if sale.items.is_empty() {
             return rule("Agregue productos antes de confirmar");
         }
-        let mut products = self.products_of(&sale)?;
-        for (product, quantity) in &mut products {
-            if !allow_negative && *quantity > product.stock {
-                return rule(format!(
-                    "'{}' solo tiene {} unidades",
-                    product.name, product.stock
-                ));
-            }
-            product.stock = (product.stock - *quantity).max(0);
-        }
         sale.calculate_totals(tax_rate);
-        self.store.sales().upsert(&sale)?;
-        for (product, _) in &products {
-            self.store.products().upsert(product)?;
-        }
+        self.store.register_sale(&sale, allow_negative)?;
         Ok(sale)
-    }
-
-    fn products_of(&self, sale: &Sale) -> Result<Vec<(Product, i64)>> {
-        let mut products = Vec::new();
-        for item in &sale.items {
-            if let Some(product) = self.store.products().find(&item.product_id)? {
-                products.push((product, item.quantity));
-            }
-        }
-        Ok(products)
     }
 }
 
