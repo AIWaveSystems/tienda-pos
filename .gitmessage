@@ -1,0 +1,27 @@
+# Git Commit Message Convention
+
+# Formato:
+# <tipo>(<scope>): <asunto corto>
+#
+# <cuerpo opcional>
+#
+# <footer opcional>
+
+# Tipos:
+#   feat     - Funcionalidad nueva
+#   fix      - Corrección de bug
+#   refactor - Cambio interno sin alterar comportamiento
+#   perf     - Mejora de rendimiento
+#   test     - Añadir o corregir pruebas
+#   docs     - Documentación
+#   chore    - Tareas de mantenimiento
+#   ci       - Cambios en CI/CD
+#   build    - Cambios en build o dependencias
+#
+# Scope (opcional):
+#   models, storage, services, ui, core
+#
+# Ejemplos:
+#   feat(models): añadir modelo de producto
+#   fix(storage): corregir persistencia de ventas
+#   refactor(services): extraer lógica de reportes
