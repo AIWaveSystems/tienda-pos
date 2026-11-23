@@ -18,3 +18,5 @@ pub use secret::KeyProvider;
 mod credentials;
 mod keychain;
 pub use credentials::{CredentialStore, Credentials};
+mod oauth_app;
+pub use oauth_app::OAuthApp;
