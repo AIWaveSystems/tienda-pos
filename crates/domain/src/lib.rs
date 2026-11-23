@@ -16,3 +16,5 @@ mod sale;
 pub use sale::{Sale, SaleItem};
 pub mod permission;
 pub use permission::Permission;
+mod role;
+pub use role::Role;
