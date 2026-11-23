@@ -15,3 +15,5 @@ mod mirror;
 pub use mirror::MirroredStore;
 mod factory;
 pub use factory::StoreFactory;
+mod migration;
+pub use migration::copy_all;
