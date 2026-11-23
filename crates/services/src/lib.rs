@@ -11,3 +11,5 @@ pub mod inventory;
 pub use inventory::InventoryService;
 pub mod sales;
 pub use sales::{SaleFilter, SalesService};
+pub mod report;
+pub use report::ReportService;
