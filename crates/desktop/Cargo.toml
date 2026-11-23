@@ -1,0 +1,28 @@
+[package]
+name = "pos-desktop"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "ventas-pos"
+path = "src/main.rs"
+
+[dependencies]
+eframe = { version = "0.31", default-features = false, features = ["accesskit", "default_fonts", "glow", "wayland", "x11"] }
+egui_extras = "0.31"
+image = { version = "0.25", default-features = false, features = ["png"] }
+pos-config.workspace = true
+pos-domain.workspace = true
+pos-services.workspace = true
+pos-storage.workspace = true
+rfd = { version = "0.15", default-features = false, features = ["xdg-portal", "async-std"] }
+rust_decimal.workspace = true
+
+[dev-dependencies]
+egui_kittest = "0.31"
+tempfile = "3"
+
+[lints]
+workspace = true

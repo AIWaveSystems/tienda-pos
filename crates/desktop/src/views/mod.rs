@@ -1,0 +1,17 @@
+pub mod categories;
+pub mod change_password;
+pub mod clients;
+pub mod command_palette;
+pub mod dashboard;
+pub mod history;
+pub mod inventory;
+pub mod login;
+pub mod navigation;
+pub mod new_sale;
+pub mod profile;
+pub mod reports;
+pub mod settings;
+pub mod shell;
+pub mod splash;
+pub mod users;
+pub mod view;
