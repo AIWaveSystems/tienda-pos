@@ -12,3 +12,5 @@ mod product;
 pub use product::{margin, Product};
 mod payment;
 pub use payment::PaymentMethod;
+mod sale;
+pub use sale::{Sale, SaleItem};
