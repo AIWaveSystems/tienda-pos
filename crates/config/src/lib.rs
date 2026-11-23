@@ -15,3 +15,4 @@ mod store;
 pub use store::ConfigStore;
 mod secret;
 pub use secret::KeyProvider;
+mod keychain;
