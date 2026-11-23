@@ -5,3 +5,5 @@ pub mod paths;
 pub use paths::Paths;
 mod backend;
 pub use backend::BackendKind;
+mod printer_format;
+pub use printer_format::PrinterFormat;
