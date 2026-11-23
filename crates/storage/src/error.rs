@@ -8,6 +8,8 @@ pub enum StorageError {
     Config(String),
     #[error("{0}")]
     Conflict(String),
+    #[error("No hay existencias suficientes de '{0}'")]
+    Stock(String),
     #[error("Los datos almacenados no son validos: {0}")]
     Data(String),
 }

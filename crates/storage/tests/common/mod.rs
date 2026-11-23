@@ -1,7 +1,7 @@
 use pos_domain::{
     Category, Client, Entity, PaymentMethod, Permission, Product, Role, Sale, SaleItem, User,
 };
-use pos_storage::{Repository, Store};
+use pos_storage::{Repository, StorageError, Store};
 use rust_decimal::Decimal;
 
 fn exercise<T>(repository: &dyn Repository<T>, first: T, second: T, changed: T)
@@ -95,4 +95,51 @@ pub fn contract(store: &dyn Store) {
     changed.items.remove(0);
     changed.calculate_totals(Decimal::ZERO);
     exercise(store.sales(), sale, Sale::default(), changed);
+    sales_are_atomic(store);
+}
+
+fn sales_are_atomic(store: &dyn Store) {
+    let product = |name: &str, stock: i64| Product {
+        name: name.into(),
+        stock,
+        ..Product::default()
+    };
+    let (full, scarce) = (product("Lleno", 100), product("Escaso", 5));
+    store
+        .products()
+        .upsert_many(&[full.clone(), scarce.clone()])
+        .unwrap();
+    let order = |quantity: i64| Sale {
+        items: vec![
+            SaleItem::new(&full.id, &full.name, 1, Decimal::ONE),
+            SaleItem::new(&scarce.id, &scarce.name, quantity, Decimal::ONE),
+        ],
+        ..Sale::default()
+    };
+    let stock = |id: &str| store.products().find(id).unwrap().unwrap().stock;
+
+    let rejected = store.register_sale(&order(6), false);
+    assert!(matches!(rejected, Err(StorageError::Stock(name)) if name == "Escaso"));
+    assert_eq!(stock(&full.id), 100);
+    assert_eq!(store.sales().count().unwrap(), 0);
+
+    let accepted = std::thread::scope(|scope| {
+        let workers: Vec<_> = (0..10)
+            .map(|_| scope.spawn(|| store.register_sale(&order(1), false).is_ok()))
+            .collect();
+        workers
+            .into_iter()
+            .map(|worker| worker.join().unwrap())
+            .filter(|done| *done)
+            .count()
+    });
+    assert_eq!(accepted, 5);
+    assert_eq!(stock(&scarce.id), 0);
+    assert_eq!(stock(&full.id), 95);
+    assert_eq!(store.sales().count().unwrap(), 5);
+
+    store.register_sale(&order(2), true).unwrap();
+    assert_eq!(stock(&scarce.id), -2);
+    store.products().replace_all(&[]).unwrap();
+    store.sales().replace_all(&[]).unwrap();
 }

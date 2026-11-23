@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use pos_config::model::SqlSettings;
 use pos_config::BackendKind;
-use pos_domain::{Category, Client, Product, Sale, User};
+use pos_domain::{now, Category, Client, Product, Sale, SaleItem, User};
 
 use super::dialect::Dialect;
 use super::driver::{SqlDriver, Statement};
@@ -84,6 +84,27 @@ impl SqlStore {
     }
 }
 
+fn take(dialect: Dialect, item: &SaleItem, allow_negative: bool) -> Statement {
+    let mut sql = format!(
+        "UPDATE {} SET stock = stock - {}, updated_at = {} WHERE id = {}",
+        Product::TABLE.name,
+        dialect.placeholder(1),
+        dialect.placeholder(2),
+        dialect.placeholder(3)
+    );
+    let mut values = vec![
+        item.quantity.into(),
+        now().into(),
+        (&item.product_id).into(),
+    ];
+    if allow_negative {
+        return Statement::new(sql, values);
+    }
+    sql.push_str(&format!(" AND stock >= {}", dialect.placeholder(4)));
+    values.push(item.quantity.into());
+    Statement::new(sql, values).requiring(&item.product_name)
+}
+
 fn schema(dialect: Dialect) -> Vec<String> {
     let mut statements = tables::<User>(dialect);
     statements.extend(tables::<Category>(dialect));
@@ -124,6 +145,18 @@ impl Store for SqlStore {
 
     fn sales(&self) -> &dyn Repository<Sale> {
         &self.sales
+    }
+
+    fn register_sale(&self, sale: &Sale, allow_negative: bool) -> Result<()> {
+        let mut items: Vec<&SaleItem> = sale.items.iter().collect();
+        items.sort_by(|a, b| a.product_id.cmp(&b.product_id));
+        let mut statements: Vec<Statement> = items
+            .into_iter()
+            .map(|item| take(self.driver.dialect(), item, allow_negative))
+            .collect();
+        statements.extend(self.sales.insert_statements(sale));
+        self.driver.transaction(&statements)?;
+        Ok(())
     }
 
     fn ping(&self) -> Result<()> {
