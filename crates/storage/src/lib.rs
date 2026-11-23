@@ -13,3 +13,5 @@ pub use mongo::{MongoConnection, MongoStore};
 pub mod cloud;
 mod mirror;
 pub use mirror::MirroredStore;
+mod factory;
+pub use factory::StoreFactory;
