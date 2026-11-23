@@ -2203,6 +2203,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "pos-services"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "open",
+ "pos-config",
+ "pos-domain",
+ "pos-storage",
+ "rust_decimal",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
 name = "pos-storage"
 version = "0.1.0"
 dependencies = [
