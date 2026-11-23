@@ -14,3 +14,5 @@ mod payment;
 pub use payment::PaymentMethod;
 mod sale;
 pub use sale::{Sale, SaleItem};
+pub mod permission;
+pub use permission::Permission;
