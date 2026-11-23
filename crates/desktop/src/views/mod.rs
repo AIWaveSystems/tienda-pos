@@ -7,5 +7,6 @@ pub mod inventory;
 pub mod login;
 pub mod navigation;
 pub mod new_sale;
+pub mod reports;
 pub mod splash;
 pub mod view;
