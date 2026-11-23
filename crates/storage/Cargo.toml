@@ -1,0 +1,32 @@
+[package]
+name = "pos-storage"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+base64 = "0.22"
+chrono.workspace = true
+mongodb = { version = "3", features = ["sync"] }
+open = "5"
+percent-encoding = "2"
+pos-config.workspace = true
+pos-domain.workspace = true
+rand = "0.8"
+rust_decimal.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2 = "0.10"
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "tls-rustls-ring-native-roots", "mysql", "postgres", "chrono", "rust_decimal"] }
+thiserror.workspace = true
+tokio = { version = "1", features = ["rt-multi-thread"] }
+ureq = { version = "2", features = ["json"] }
+url = "2"
+
+[dev-dependencies]
+tempfile = "3"
+tiny_http = "0.12"
+
+[lints]
+workspace = true
