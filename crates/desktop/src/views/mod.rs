@@ -9,4 +9,5 @@ pub mod navigation;
 pub mod new_sale;
 pub mod reports;
 pub mod splash;
+pub mod users;
 pub mod view;
