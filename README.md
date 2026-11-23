@@ -53,6 +53,33 @@ ventas-pos-rust/
   Cargo.toml
 ```
 
+## Uso
+
+```bash
+cargo run --release -p pos-desktop
+```
+
+Usuario inicial `admin`, contrasena `admin123`; el sistema obliga a cambiarla.
+
+| Sistema | Configuracion | Datos |
+|---|---|---|
+| Windows | `%APPDATA%\VentasPOSRust` | `%LOCALAPPDATA%\VentasPOSRust` |
+| Linux / macOS | `~/.config/ventas-pos-rust` | `~/.local/share/ventas-pos-rust` |
+| Portable (`portable.txt`) | `config/` | `data/` |
+
+En Linux hace falta `libdbus-1-dev` para compilar. Google Drive y Dropbox
+necesitan un archivo `.env` basado en `.env.example`.
+
+## Pruebas
+
+```bash
+cargo test --workspace
+docker compose up --detach --wait
+cargo test -p pos-storage --test databases -- --include-ignored
+```
+
+El estado real de cada comprobacion esta en `.agents/parity.md`.
+
 ## Ramas
 
 | Rama | Uso |
