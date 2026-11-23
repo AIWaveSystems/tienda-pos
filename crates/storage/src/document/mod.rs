@@ -4,3 +4,5 @@ mod local;
 pub use local::LocalFiles;
 mod repository;
 pub use repository::DocumentRepository;
+mod store;
+pub use store::DocumentStore;
