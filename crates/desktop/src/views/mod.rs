@@ -1,5 +1,6 @@
 pub mod categories;
 pub mod change_password;
+pub mod clients;
 pub mod dashboard;
 pub mod login;
 pub mod navigation;
