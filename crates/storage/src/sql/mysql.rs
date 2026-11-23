@@ -61,18 +61,20 @@ impl SqlDriver for MySqlDriver {
     }
 
     fn transaction(&self, statements: &[Statement]) -> Result<Vec<u64>> {
-        self.runtime
-            .block_on(async {
-                let mut transaction = self.pool.begin().await?;
-                let mut affected = Vec::with_capacity(statements.len());
-                for statement in statements {
-                    let outcome = bind(statement).execute(&mut *transaction).await?;
-                    affected.push(outcome.rows_affected());
-                }
-                transaction.commit().await?;
-                Ok(affected)
-            })
-            .map_err(failure)
+        self.runtime.block_on(async {
+            let mut transaction = self.pool.begin().await.map_err(failure)?;
+            let mut affected = Vec::with_capacity(statements.len());
+            for statement in statements {
+                let outcome = bind(statement)
+                    .execute(&mut *transaction)
+                    .await
+                    .map_err(failure)?;
+                statement.verify(outcome.rows_affected())?;
+                affected.push(outcome.rows_affected());
+            }
+            transaction.commit().await.map_err(failure)?;
+            Ok(affected)
+        })
     }
 
     fn migrate(&self, statements: &[String]) -> Result<()> {
