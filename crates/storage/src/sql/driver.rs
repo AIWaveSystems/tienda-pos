@@ -5,6 +5,7 @@ use crate::{Result, StorageError};
 pub struct Statement {
     pub sql: String,
     pub values: Vec<SqlValue>,
+    pub required: Option<String>,
 }
 
 impl Statement {
@@ -12,6 +13,19 @@ impl Statement {
         Self {
             sql: sql.into(),
             values,
+            required: None,
+        }
+    }
+
+    pub fn requiring(mut self, name: &str) -> Self {
+        self.required = Some(name.to_owned());
+        self
+    }
+
+    pub fn verify(&self, affected: u64) -> Result<()> {
+        match &self.required {
+            Some(name) if affected == 0 => Err(StorageError::Stock(name.clone())),
+            _ => Ok(()),
         }
     }
 }
