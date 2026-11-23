@@ -13,3 +13,5 @@ mod sanitize;
 pub use sanitize::sanitize;
 mod store;
 pub use store::ConfigStore;
+mod secret;
+pub use secret::KeyProvider;
