@@ -6,6 +6,7 @@ pub mod field;
 pub mod loading;
 pub mod notice;
 pub mod paginator;
+pub mod print_dialog;
 pub mod select;
 pub mod table;
 pub mod title;
