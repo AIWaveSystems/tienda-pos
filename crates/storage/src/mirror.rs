@@ -169,6 +169,13 @@ impl Store for MirroredStore {
         &self.sales
     }
 
+    fn register_sale(&self, sale: &Sale, allow_negative: bool) -> Result<()> {
+        self.primary.register_sale(sale, allow_negative)?;
+        self.products.mark();
+        self.sales.mark();
+        Ok(())
+    }
+
     fn ping(&self) -> Result<()> {
         self.primary.ping()
     }

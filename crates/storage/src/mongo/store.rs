@@ -7,7 +7,7 @@ use mongodb::IndexModel;
 use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
 use pos_config::model::MongoSettings;
 use pos_config::BackendKind;
-use pos_domain::{Category, Client, Product, Sale, User};
+use pos_domain::{Category, Client, Product, Sale, SaleItem, User};
 
 use super::repository::MongoRepository;
 use crate::{Repository, Result, StorageError, Store};
@@ -73,6 +73,35 @@ impl MongoStore {
         Ok(store)
     }
 
+    fn take(&self, item: &SaleItem, allow_negative: bool) -> Result<()> {
+        let mut filter = doc! { "_id": &item.product_id };
+        if !allow_negative {
+            filter.insert("stock", doc! { "$gte": item.quantity });
+        }
+        let matched = self.move_stock(filter, -item.quantity)?;
+        if matched == 0 && !allow_negative {
+            return Err(StorageError::Stock(item.product_name.clone()));
+        }
+        Ok(())
+    }
+
+    fn give_back(&self, items: &[&SaleItem]) -> Result<()> {
+        items.iter().try_for_each(|item| {
+            self.move_stock(doc! { "_id": &item.product_id }, item.quantity)?;
+            Ok(())
+        })
+    }
+
+    fn move_stock(&self, filter: Document, delta: i64) -> Result<u64> {
+        let outcome = self
+            .products
+            .collection()
+            .update_one(filter, doc! { "$inc": { "stock": delta } })
+            .run()
+            .map_err(failure)?;
+        Ok(outcome.matched_count)
+    }
+
     fn create_indexes(&self) -> Result<()> {
         index(self.users.collection(), "username", true)?;
         index(self.clients.collection(), "tax_id", false)?;
@@ -107,6 +136,24 @@ impl Store for MongoStore {
 
     fn sales(&self) -> &dyn Repository<Sale> {
         &self.sales
+    }
+
+    fn register_sale(&self, sale: &Sale, allow_negative: bool) -> Result<()> {
+        let mut taken = Vec::new();
+        for item in &sale.items {
+            match self.take(item, allow_negative) {
+                Ok(()) => taken.push(item),
+                Err(failure) => {
+                    self.give_back(&taken)?;
+                    return Err(failure);
+                }
+            }
+        }
+        let outcome = self.sales.upsert(sale);
+        if outcome.is_err() {
+            self.give_back(&taken)?;
+        }
+        outcome
     }
 
     fn ping(&self) -> Result<()> {

@@ -16,6 +16,8 @@ pub trait Store: Send + Sync {
 
     fn sales(&self) -> &dyn Repository<Sale>;
 
+    fn register_sale(&self, sale: &Sale, allow_negative: bool) -> Result<()>;
+
     fn ping(&self) -> Result<()>;
 
     fn close(&self) {}
