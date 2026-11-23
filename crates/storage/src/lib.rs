@@ -8,3 +8,5 @@ pub mod document;
 pub use document::{DocumentStore, FileBackend};
 pub mod sql;
 pub use sql::{SqlConnection, SqlStore};
+pub mod mongo;
+pub use mongo::{MongoConnection, MongoStore};
