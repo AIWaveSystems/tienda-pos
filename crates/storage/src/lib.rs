@@ -11,3 +11,5 @@ pub use sql::{SqlConnection, SqlStore};
 pub mod mongo;
 pub use mongo::{MongoConnection, MongoStore};
 pub mod cloud;
+mod mirror;
+pub use mirror::MirroredStore;
