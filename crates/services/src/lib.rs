@@ -7,3 +7,5 @@ pub mod category;
 pub use category::CategoryService;
 pub mod client;
 pub use client::ClientService;
+pub mod inventory;
+pub use inventory::InventoryService;
