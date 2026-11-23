@@ -1,4 +1,5 @@
 fn main() {}
+mod app;
 mod boot;
 mod components;
 mod env;
