@@ -69,19 +69,32 @@ impl<T: SqlRecord> SqlRepository<T> {
         self.driver.query(&statement, &table.kinds())
     }
 
-    pub fn save_statements(&self, item: &T) -> Vec<Statement> {
-        let dialect = self.driver.dialect();
-        let mut statements = vec![Statement::new(dialect.upsert(&T::TABLE), item.values())];
+    pub fn insert_statements(&self, item: &T) -> Vec<Statement> {
+        let sql = self.driver.dialect().insert(&T::TABLE);
+        let mut statements = vec![Statement::new(sql, item.values())];
+        statements.extend(self.child_statements(item));
+        statements
+    }
+
+    fn save_statements(&self, item: &T) -> Vec<Statement> {
+        let sql = self.driver.dialect().upsert(&T::TABLE);
+        let mut statements = vec![Statement::new(sql, item.values())];
         if let Some(child) = T::CHILD {
             statements.push(self.delete_statement(&child, item.id()));
-            let insert = dialect.insert(&child);
-            statements.extend(
-                item.child_values()
-                    .into_iter()
-                    .map(|values| Statement::new(insert.clone(), values)),
-            );
         }
+        statements.extend(self.child_statements(item));
         statements
+    }
+
+    fn child_statements(&self, item: &T) -> Vec<Statement> {
+        let Some(child) = T::CHILD else {
+            return Vec::new();
+        };
+        let insert = self.driver.dialect().insert(&child);
+        item.child_values()
+            .into_iter()
+            .map(|values| Statement::new(insert.clone(), values))
+            .collect()
     }
 
     fn delete_statement(&self, table: &Table, id: &str) -> Statement {
