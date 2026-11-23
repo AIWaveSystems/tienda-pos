@@ -6,6 +6,8 @@ mod components;
 mod env;
 mod input;
 mod task;
+#[cfg(test)]
+mod tests;
 mod theme;
 mod views;
 
