@@ -5,3 +5,4 @@ mod env;
 mod input;
 mod task;
 mod theme;
+mod views;
