@@ -10,3 +10,5 @@ mod client;
 pub use client::Client;
 mod product;
 pub use product::{margin, Product};
+mod payment;
+pub use payment::PaymentMethod;
