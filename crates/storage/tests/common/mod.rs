@@ -26,7 +26,9 @@ where
     assert!(repository.find("ausente").unwrap().is_none());
     assert!(!repository.delete("ausente").unwrap());
     assert!(repository.delete(second.id()).unwrap());
-    repository.replace_all(&[second.clone()]).unwrap();
+    repository
+        .replace_all(std::slice::from_ref(&second))
+        .unwrap();
     assert_eq!(repository.all().unwrap(), vec![second]);
     repository.replace_all(&[]).unwrap();
 }
