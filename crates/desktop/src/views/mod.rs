@@ -9,6 +9,7 @@ pub mod navigation;
 pub mod new_sale;
 pub mod profile;
 pub mod reports;
+pub mod settings;
 pub mod splash;
 pub mod users;
 pub mod view;
