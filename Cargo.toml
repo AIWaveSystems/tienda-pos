@@ -10,6 +10,7 @@ authors = ["Ilesandres", "Claude (Anthropic)"]
 
 [workspace.dependencies]
 pos-domain = { path = "crates/domain" }
+pos-config = { path = "crates/config" }
 chrono = { version = "0.4", features = ["serde"] }
 rust_decimal = { version = "1", features = ["serde-with-float"] }
 serde = { version = "1", features = ["derive"] }
