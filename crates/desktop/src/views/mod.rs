@@ -2,6 +2,7 @@ pub mod categories;
 pub mod change_password;
 pub mod clients;
 pub mod dashboard;
+pub mod history;
 pub mod inventory;
 pub mod login;
 pub mod navigation;
