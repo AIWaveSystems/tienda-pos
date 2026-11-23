@@ -9,3 +9,5 @@ pub mod client;
 pub use client::ClientService;
 pub mod inventory;
 pub use inventory::InventoryService;
+pub mod sales;
+pub use sales::{SaleFilter, SalesService};
