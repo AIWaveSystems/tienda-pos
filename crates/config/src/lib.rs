@@ -15,4 +15,6 @@ mod store;
 pub use store::ConfigStore;
 mod secret;
 pub use secret::KeyProvider;
+mod credentials;
 mod keychain;
+pub use credentials::{CredentialStore, Credentials};
