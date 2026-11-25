@@ -19,6 +19,8 @@ El port se construye primero hasta igualar al original y despues se mejora.
 
 - Anulacion de ventas y movimientos de inventario con autor.
 - Punto de venta con catalogo, cambio y notas.
+- Caja con entradas y gastos, informe diario y arqueo de efectivo.
+- Compras por cliente y copia de seguridad.
 - Informes por periodo con grafico, utilidad estimada y vendedores.
 - Tema claro y oscuro, columnas ordenables y exportacion a CSV.
 
