@@ -58,7 +58,7 @@ impl Shell {
             .resizable(false)
             .frame(
                 Frame::new()
-                    .fill(theme::SIDEBAR)
+                    .fill(theme::palette().sidebar)
                     .inner_margin(Margin::symmetric(0, 18)),
             );
         match panel
@@ -76,7 +76,11 @@ impl Shell {
             }
         }
         CentralPanel::default()
-            .frame(Frame::new().fill(theme::BG).inner_margin(Margin::same(22)))
+            .frame(
+                Frame::new()
+                    .fill(theme::palette().bg)
+                    .inner_margin(Margin::same(22)),
+            )
             .show(ctx, |ui| match &mut self.view {
                 Some(view) if self.route.is_some_and(|route| env.can(route.permission())) => {
                     view.show(ui, env);
@@ -130,7 +134,11 @@ impl Shell {
 fn denied(ui: &mut Ui) {
     ui.vertical_centered(|ui| {
         ui.add_space(120.0);
-        ui.label(RichText::new("Sin acceso").size(24.0).color(theme::WARNING));
+        ui.label(
+            RichText::new("Sin acceso")
+                .size(24.0)
+                .color(theme::palette().warning),
+        );
         ui.label("Su usuario no tiene permisos asignados para esta vista.");
         ui.label("Solicite acceso a un administrador.");
     });
