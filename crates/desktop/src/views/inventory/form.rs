@@ -99,9 +99,14 @@ impl ProductForm {
                 &format!("Costo ({currency})"),
                 &mut self.cost,
             );
-            field::text(&mut columns[0], "Stock actual", &mut self.stock);
+            columns[0].add_enabled_ui(!self.editing, |ui| {
+                field::text(ui, "Stock actual", &mut self.stock);
+            });
             field::text(&mut columns[1], "Stock minimo", &mut self.min_stock);
         });
+        if self.editing {
+            title::hint(ui, "El stock se cambia con Ajustar Stock.");
+        }
         self.margin(ui);
         if self.editing {
             ui.checkbox(&mut self.item.active, "Producto activo");

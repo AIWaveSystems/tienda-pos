@@ -207,3 +207,57 @@ fn amounts_are_grouped() {
     assert_eq!(format::amount(Decimal::ZERO), "0.00");
     assert_eq!(format::amount(Decimal::new(1005, 3)), "1.01");
 }
+
+#[test]
+fn voided_sales_return_stock_and_leave_reports() {
+    let (_folder, services) = services();
+    let bread = services.inventory.save(product("Pan", 5)).unwrap();
+    let sale = Sale {
+        items: vec![SaleItem::new(&bread.id, "Pan", 3, bread.price)],
+        seller: "ana".into(),
+        ..Sale::default()
+    };
+    let sale = services.sales.register(sale, Decimal::ZERO, false).unwrap();
+    let voided = services.sales.void(sale.clone(), "luis").unwrap();
+    assert!(voided.is_voided());
+    assert!(services.sales.void(sale, "luis").is_err());
+    assert_eq!(
+        services.inventory.find(&bread.id).unwrap().unwrap().stock,
+        5
+    );
+    assert_eq!(services.reports.overview(10, 14).unwrap().sales.count, 0);
+    let history = services.inventory.movements().unwrap();
+    assert_eq!(history.len(), 2);
+    assert!(history
+        .iter()
+        .any(|item| item.author == "luis" && item.quantity == 3));
+}
+
+#[test]
+fn adjustments_are_recorded_and_editing_keeps_stock() {
+    let (_folder, services) = services();
+    let bread = services.inventory.save(product("Pan", 5)).unwrap();
+    let inventory = &services.inventory;
+    assert!(inventory.adjust_stock(&bread, -6, "Merma", "ana").is_err());
+    assert!(inventory.adjust_stock(&bread, 1, " ", "ana").is_err());
+    assert!(inventory.adjust_stock(&bread, 0, "Nada", "ana").is_err());
+    inventory.adjust_stock(&bread, -2, "Merma", "ana").unwrap();
+    let mut edited = bread.clone();
+    edited.name = "Pan fresco".into();
+    assert_eq!(inventory.save(edited).unwrap().stock, 3);
+    assert_eq!(inventory.movements().unwrap()[0].reference, "Merma");
+}
+
+#[test]
+fn discounts_cannot_exceed_the_total() {
+    let (_folder, services) = services();
+    let bread = services.inventory.save(product("Pan", 5)).unwrap();
+    for discount in [Decimal::from(-1), Decimal::from(101)] {
+        let sale = Sale {
+            items: vec![SaleItem::new(&bread.id, "Pan", 1, bread.price)],
+            discount,
+            ..Sale::default()
+        };
+        assert!(services.sales.register(sale, Decimal::ZERO, false).is_err());
+    }
+}

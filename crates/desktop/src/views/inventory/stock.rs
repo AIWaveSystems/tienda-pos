@@ -8,6 +8,7 @@ use crate::env::Env;
 pub struct StockDialog {
     product: Product,
     delta: String,
+    reason: String,
     error: String,
 }
 
@@ -15,7 +16,8 @@ impl StockDialog {
     pub fn new(product: Product) -> Self {
         Self {
             product,
-            delta: "0".to_owned(),
+            delta: String::new(),
+            reason: String::new(),
             error: String::new(),
         }
     }
@@ -27,6 +29,7 @@ impl StockDialog {
                 self.product.name, self.product.stock
             ));
             field::text(ui, "Cantidad (+/-)", &mut self.delta);
+            field::text(ui, "Motivo *", &mut self.reason);
         }) {
             DialogEvent::None => None,
             DialogEvent::Cancel => Some(false),
@@ -39,7 +42,11 @@ impl StockDialog {
             self.error = "Ingrese un numero entero".to_owned();
             return None;
         };
-        match env.services.inventory.adjust_stock(&self.product.id, delta) {
+        let outcome =
+            env.services
+                .inventory
+                .adjust_stock(&self.product, delta, &self.reason, &env.author());
+        match outcome {
             Ok(_) => Some(true),
             Err(failure) => {
                 self.error = failure.to_string();
