@@ -9,6 +9,7 @@ microsegundos. Dinero: decimal exacto, serializado como numero en JSON.
 | Client | id, name, email, phone, address, tax_id, notes, active, created_at, updated_at |
 | Product | id, name, description, price, cost, stock, min_stock, category_id, barcode, active, created_at, updated_at |
 | Sale | id, client_id, client_name, items, subtotal, tax, discount, total, payment_method, notes, seller, voided_at, created_at |
+| CashEntry | id, kind, concept, category, amount, payment_method, author, voided_at, created_at |
 | StockMovement | id, product_id, product_name, kind, quantity, reference, author, created_at |
 | SaleItem | product_id, product_name, quantity, unit_price, subtotal |
 | User | id, username, password_hash, full_name, role, permissions, is_default, active, last_login, created_at, updated_at |
@@ -25,11 +26,14 @@ microsegundos. Dinero: decimal exacto, serializado como numero en JSON.
 - `StockMovement.quantity` lleva signo; la suma explica cada cambio de stock.
 - Una venta se anula una sola vez y deja de contar en informes.
 
+- Efectivo esperado: ventas en efectivo + entradas - gastos en efectivo del dia.
+- El valor de `CashEntry` es positivo; el tipo define el signo.
+
 ## Roles
 
 | Rol | Permisos |
 |---|---|
 | admin | todos |
-| vendedor | dashboard, clientes, ventas, historial |
+| vendedor | dashboard, clientes, ventas, historial, caja |
 | bodega | dashboard, inventario, informes |
 | personalizado | seleccion manual |
