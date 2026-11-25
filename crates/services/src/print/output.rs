@@ -15,10 +15,18 @@ pub enum PrintOutcome {
 }
 
 pub fn save(document: &Document, destination: &Path) -> io::Result<()> {
+    write(destination, &document.html)
+}
+
+pub fn export(content: &str, destination: &Path) -> io::Result<()> {
+    write(destination, content)
+}
+
+fn write(destination: &Path, content: &str) -> io::Result<()> {
     if let Some(parent) = destination.parent() {
         fs::create_dir_all(parent)?;
     }
-    fs::write(destination, &document.html)
+    fs::write(destination, content)
 }
 
 pub fn preview(document: &Document) -> io::Result<()> {

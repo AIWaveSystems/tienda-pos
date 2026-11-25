@@ -1,3 +1,4 @@
+mod csv;
 mod document;
 mod style;
 pub use document::Document;
@@ -8,6 +9,6 @@ pub use receipt::receipt;
 mod report;
 pub use report::{overview_report, report, Section};
 mod output;
-pub use output::{preview, print, save, PrintOutcome};
+pub use output::{export, preview, print, save, PrintOutcome};
 mod printers;
 pub use printers::{list_printers, Printers};
