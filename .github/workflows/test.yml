@@ -39,3 +39,4 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y libdbus-1-dev pkg-config
       - run: docker compose up --detach --wait
       - run: cargo test -p pos-storage --test databases -- --include-ignored
+      - run: cargo test -p pos-services --test postgres -- --include-ignored
