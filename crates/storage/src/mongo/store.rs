@@ -7,7 +7,7 @@ use mongodb::IndexModel;
 use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
 use pos_config::model::MongoSettings;
 use pos_config::BackendKind;
-use pos_domain::{Category, Client, Product, Sale, StockMovement, User};
+use pos_domain::{CashEntry, Category, Client, Product, Sale, StockMovement, User};
 
 use super::repository::MongoRepository;
 use crate::{Repository, Result, StockOperation, StorageError, Store};
@@ -45,6 +45,7 @@ pub struct MongoStore {
     pub(super) products: MongoRepository<Product>,
     pub(super) sales: MongoRepository<Sale>,
     pub(super) movements: MongoRepository<StockMovement>,
+    cash: MongoRepository<CashEntry>,
 }
 
 impl MongoStore {
@@ -67,6 +68,7 @@ impl MongoStore {
             clients: MongoRepository::new(&database),
             products: MongoRepository::new(&database),
             sales: MongoRepository::new(&database),
+            cash: MongoRepository::new(&database),
             movements: MongoRepository::new(&database),
             database,
         };
@@ -80,6 +82,7 @@ impl MongoStore {
         index(self.clients.collection(), "tax_id", false)?;
         index(self.products.collection(), "barcode", false)?;
         index(self.products.collection(), "category_id", false)?;
+        index(self.cash.collection(), "created_at", false)?;
         index(self.movements.collection(), "product_id", false)?;
         index(self.sales.collection(), "created_at", false)?;
         index(self.sales.collection(), "client_id", false)?;
@@ -114,6 +117,10 @@ impl Store for MongoStore {
 
     fn movements(&self) -> &dyn Repository<StockMovement> {
         &self.movements
+    }
+
+    fn cash(&self) -> &dyn Repository<CashEntry> {
+        &self.cash
     }
 
     fn apply_stock(&self, operation: &StockOperation) -> Result<()> {

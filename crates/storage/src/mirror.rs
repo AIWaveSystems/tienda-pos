@@ -4,7 +4,7 @@ use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
 use pos_config::BackendKind;
-use pos_domain::{Category, Client, Entity, Product, Sale, StockMovement, User};
+use pos_domain::{CashEntry, Category, Client, Entity, Product, Sale, StockMovement, User};
 
 use crate::{DocumentStore, Repository, Result, SaleChange, StockOperation, Store};
 
@@ -93,6 +93,7 @@ impl Copier {
             Category::COLLECTION => target.categories().replace_all(&source.categories().all()?),
             Client::COLLECTION => target.clients().replace_all(&source.clients().all()?),
             Product::COLLECTION => target.products().replace_all(&source.products().all()?),
+            CashEntry::COLLECTION => target.cash().replace_all(&source.cash().all()?),
             StockMovement::COLLECTION => target.movements().replace_all(&source.movements().all()?),
             _ => target.sales().replace_all(&source.sales().all()?),
         }
@@ -109,6 +110,7 @@ pub struct MirroredStore {
     products: MirroredRepository<Product>,
     sales: MirroredRepository<Sale>,
     movements: MirroredRepository<StockMovement>,
+    cash: MirroredRepository<CashEntry>,
 }
 
 impl MirroredStore {
@@ -128,6 +130,7 @@ impl MirroredStore {
             Product::COLLECTION,
             Sale::COLLECTION,
             StockMovement::COLLECTION,
+            CashEntry::COLLECTION,
         ]));
         let copier = Arc::new(Copier {
             primary: primary.clone(),
@@ -141,6 +144,7 @@ impl MirroredStore {
             categories: wrap(&primary, &dirty, |store| store.categories()),
             clients: wrap(&primary, &dirty, |store| store.clients()),
             products: wrap(&primary, &dirty, |store| store.products()),
+            cash: wrap(&primary, &dirty, |store| store.cash()),
             movements: wrap(&primary, &dirty, |store| store.movements()),
             sales: wrap(&primary, &dirty, |store| store.sales()),
             primary,
@@ -175,6 +179,10 @@ impl Store for MirroredStore {
 
     fn movements(&self) -> &dyn Repository<StockMovement> {
         &self.movements
+    }
+
+    fn cash(&self) -> &dyn Repository<CashEntry> {
+        &self.cash
     }
 
     fn apply_stock(&self, operation: &StockOperation) -> Result<()> {

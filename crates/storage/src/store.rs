@@ -1,5 +1,5 @@
 use pos_config::BackendKind;
-use pos_domain::{Category, Client, Product, Sale, StockMovement, User};
+use pos_domain::{CashEntry, Category, Client, Product, Sale, StockMovement, User};
 
 use crate::{Repository, Result, StockOperation};
 
@@ -17,6 +17,8 @@ pub trait Store: Send + Sync {
     fn sales(&self) -> &dyn Repository<Sale>;
 
     fn movements(&self) -> &dyn Repository<StockMovement>;
+
+    fn cash(&self) -> &dyn Repository<CashEntry>;
 
     fn apply_stock(&self, operation: &StockOperation) -> Result<()>;
 
