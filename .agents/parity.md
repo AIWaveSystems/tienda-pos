@@ -34,6 +34,7 @@ Referencia: rama `feat/externals-integrations`, commit `2bde9b7`.
 - Punto de venta con catalogo, categorias, recibido, cambio y notas.
 - Tema claro y oscuro, avisos no bloqueantes, columnas ordenables.
 - Exportacion a CSV.
+- Caja, informe diario, arqueo, compras por cliente y copia de seguridad.
 
 ## Verificacion
 
