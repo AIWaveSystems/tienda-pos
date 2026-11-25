@@ -42,9 +42,11 @@ fn eye(ui: &mut Ui, field: &Response, visible: bool, label: &str) -> bool {
     } else {
         (colors.subtle, "Mostrar")
     };
+    let frame = field.rect + PASSWORD_MARGIN;
+    let right = frame.right().min(ui.max_rect().right());
     let area = Rect::from_min_max(
-        Pos2::new(field.rect.right() - EYE_WIDTH, field.rect.top()),
-        field.rect.max,
+        Pos2::new(right - EYE_WIDTH, frame.top()),
+        Pos2::new(right, frame.bottom()),
     );
     let hint = format!("{action} {}", label.to_lowercase());
     let response = ui
