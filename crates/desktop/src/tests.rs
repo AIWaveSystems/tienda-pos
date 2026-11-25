@@ -237,3 +237,16 @@ fn settings_are_validated_and_saved() {
     desk.click("Guardar cambios");
     desk.wait_for("El impuesto debe ser un numero");
 }
+
+#[test]
+fn passwords_can_be_shown_and_hidden() {
+    let mut desk = Desk::start();
+    assert!(!desk.sees("Mostrar contrasena"));
+    desk.write_password(0, "secreta1");
+    let hidden = |desk: &Desk| desk.harness.query_by_role(Role::PasswordInput).is_some();
+    assert!(hidden(&desk));
+    desk.click("Mostrar contrasena");
+    assert!(!hidden(&desk));
+    desk.click("Ocultar contrasena");
+    assert!(hidden(&desk));
+}
