@@ -15,6 +15,8 @@ const COLUMNS: &[Column] = &[
     column("payment_method", Kind::Short),
     column("notes", Kind::Long),
     column("created_at", Kind::Moment),
+    column("seller", Kind::Short),
+    column("voided_at", Kind::OptionalMoment),
 ];
 
 const ITEM_COLUMNS: &[Column] = &[
@@ -68,6 +70,8 @@ impl SqlRecord for Sale {
             self.payment_method.key().into(),
             (&self.notes).into(),
             self.created_at.into(),
+            (&self.seller).into(),
+            self.voided_at.into(),
         ]
     }
 
@@ -84,6 +88,8 @@ impl SqlRecord for Sale {
             payment_method: PaymentMethod::from_key(&row.text()?).unwrap_or(PaymentMethod::Otro),
             notes: row.text()?,
             created_at: row.moment()?,
+            seller: row.text()?,
+            voided_at: row.optional_moment()?,
         })
     }
 
