@@ -1,16 +1,19 @@
-use eframe::egui::{Context, RichText, Ui};
-use pos_domain::{Product, Sale};
-use pos_services::{format, report, Result};
+use eframe::egui::{Context, RichText, ScrollArea, Ui};
+use pos_domain::Product;
+use pos_services::report::Overview;
+use pos_services::{format, Period, Result};
 
+use super::reports::daily;
 use super::view::View;
+use crate::components::chart::bars;
 use crate::components::{card, loading, title};
 use crate::env::Env;
 use crate::task::Task;
 use crate::theme;
 
 struct Summary {
-    products: Vec<Product>,
-    sales: Vec<Sale>,
+    today: Overview,
+    recent: Overview,
     clients: usize,
 }
 
@@ -25,8 +28,8 @@ impl DashboardView {
         let services = env.services.clone();
         let task = Task::spawn(ctx, move || -> Result<Summary> {
             Ok(Summary {
-                products: services.inventory.list(false)?,
-                sales: services.sales.list()?,
+                today: services.reports.overview(5, Period::Today)?,
+                recent: services.reports.overview(5, Period::Fortnight)?,
                 clients: services.clients.count()?,
             })
         });
@@ -53,60 +56,82 @@ impl View for DashboardView {
         if self.task.is_some() {
             loading::loading(ui, "Cargando resumen...");
         }
-        title::status(ui, &self.failure, theme::DANGER);
+        title::status(ui, &self.failure, theme::palette().danger);
         if let Some(summary) = &self.summary {
-            render(ui, summary, env);
+            ScrollArea::vertical().show(ui, |ui| render(ui, summary, env));
         }
     }
 }
 
 fn render(ui: &mut Ui, summary: &Summary, env: &Env) {
-    let active: Vec<Sale> = summary
-        .sales
-        .iter()
-        .filter(|sale| !sale.is_voided())
-        .cloned()
-        .collect();
-    let revenue = report::summarize(&active).total;
+    let colors = theme::palette();
+    let currency = &env.config.general.currency;
     card::stats(
         ui,
         &[
             (
-                "Productos",
-                summary.products.len().to_string(),
-                theme::ACCENT,
+                "Ventas de hoy",
+                summary.today.sales.count.to_string(),
+                colors.warning,
             ),
-            ("Clientes", summary.clients.to_string(), theme::SUCCESS),
-            ("Ventas", active.len().to_string(), theme::WARNING),
             (
-                "Ingresos",
-                format::money(revenue, &env.config.general.currency),
-                theme::PURPLE,
+                "Ingresos de hoy",
+                format::money(summary.today.sales.total, currency),
+                colors.success,
+            ),
+            (
+                "Ingresos 14 dias",
+                format::money(summary.recent.sales.total, currency),
+                colors.purple,
+            ),
+            (
+                "Productos / Clientes",
+                format!("{} / {}", summary.today.inventory.products, summary.clients),
+                colors.accent,
             ),
         ],
     );
-    if !env.config.inventory.low_stock_on_dashboard {
+    title::heading(ui, "Ultimos 14 dias");
+    if summary.recent.sales.count == 0 {
+        title::hint(ui, "Aun no hay ventas en este periodo");
+    } else {
+        card::surface(ui, |ui| bars(ui, &daily(&summary.recent), 150.0));
+    }
+    if !summary.recent.top.is_empty() {
+        title::heading(ui, "Mas vendidos");
+        card::surface(ui, |ui| {
+            for item in &summary.recent.top {
+                ui.label(format!(
+                    "{}  -  {} unidades, {}",
+                    item.name,
+                    item.quantity,
+                    format::amount(item.revenue)
+                ));
+            }
+        });
+    }
+    if env.config.inventory.low_stock_on_dashboard {
+        low_stock(ui, &summary.today.inventory.low_stock);
+    }
+}
+
+fn low_stock(ui: &mut Ui, products: &[Product]) {
+    if products.is_empty() {
         return;
     }
-    let low: Vec<&Product> = summary.products.iter().filter(|p| p.low_stock()).collect();
-    if low.is_empty() {
-        return;
-    }
-    ui.add_space(12.0);
+    title::heading(ui, &format!("Stock bajo ({})", products.len()));
     card::surface(ui, |ui| {
-        ui.label(
-            RichText::new(format!("Stock bajo ({})", low.len()))
-                .strong()
-                .color(theme::WARNING),
-        );
-        for product in low.iter().take(6) {
-            ui.label(format!(
-                "{}  -  {} unidades (minimo {})",
-                product.name, product.stock, product.min_stock
-            ));
+        for product in products.iter().take(6) {
+            ui.label(
+                RichText::new(format!(
+                    "{}  -  {} unidades (minimo {})",
+                    product.name, product.stock, product.min_stock
+                ))
+                .color(theme::palette().warning),
+            );
         }
-        if low.len() > 6 {
-            title::hint(ui, &format!("y {} producto(s) mas", low.len() - 6));
+        if products.len() > 6 {
+            title::hint(ui, &format!("y {} producto(s) mas", products.len() - 6));
         }
     });
 }
