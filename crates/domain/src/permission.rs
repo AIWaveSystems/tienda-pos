@@ -9,18 +9,20 @@ pub enum Permission {
     Clientes,
     Ventas,
     Historial,
+    Caja,
     Informes,
     Usuarios,
     Configuracion,
 }
 
 impl Permission {
-    pub const ALL: [Self; 8] = [
+    pub const ALL: [Self; 9] = [
         Self::Dashboard,
         Self::Inventario,
         Self::Clientes,
         Self::Ventas,
         Self::Historial,
+        Self::Caja,
         Self::Informes,
         Self::Usuarios,
         Self::Configuracion,
@@ -33,6 +35,7 @@ impl Permission {
             Self::Clientes => "clientes",
             Self::Ventas => "ventas",
             Self::Historial => "historial",
+            Self::Caja => "caja",
             Self::Informes => "informes",
             Self::Usuarios => "usuarios",
             Self::Configuracion => "configuracion",
@@ -46,6 +49,7 @@ impl Permission {
             Self::Clientes => "Clientes",
             Self::Ventas => "Nueva Venta",
             Self::Historial => "Historial",
+            Self::Caja => "Caja",
             Self::Informes => "Informes",
             Self::Usuarios => "Usuarios",
             Self::Configuracion => "Configuracion",
@@ -59,6 +63,7 @@ impl Permission {
             Self::Clientes => "Crear, editar y eliminar clientes",
             Self::Ventas => "Registrar ventas en el punto de venta",
             Self::Historial => "Consultar las ventas registradas",
+            Self::Caja => "Registrar entradas de dinero y gastos",
             Self::Informes => "Generar informes y reportes",
             Self::Usuarios => "Administrar usuarios y sus permisos",
             Self::Configuracion => "Modificar parametros del sistema",
