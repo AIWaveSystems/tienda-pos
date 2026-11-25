@@ -1,4 +1,5 @@
 mod form;
+mod history;
 
 use eframe::egui::{Context, Ui};
 use pos_domain::Client;
@@ -12,6 +13,7 @@ use crate::components::{button, title};
 use crate::env::Env;
 use crate::task::Task;
 use form::ClientForm;
+use history::ClientHistory;
 
 const COLUMNS: [Column; 4] = [
     left("Nombre", 180.0),
@@ -23,6 +25,7 @@ const COLUMNS: [Column; 4] = [
 pub struct ClientsView {
     list: List<Client>,
     form: Option<ClientForm>,
+    history: Option<ClientHistory>,
     deleting: Option<(Confirm, String)>,
 }
 
@@ -31,6 +34,7 @@ impl ClientsView {
         let mut view = Self {
             list: List::new("clients"),
             form: None,
+            history: None,
             deleting: None,
         };
         view.refresh(ctx, env);
@@ -90,6 +94,11 @@ impl ClientsView {
                 }
             }
         }
+        if let Some(history) = &mut self.history {
+            if !history.show(ctx, env) {
+                self.history = None;
+            }
+        }
         let Some((confirm, id)) = &self.deleting else {
             return;
         };
@@ -130,6 +139,12 @@ impl View for ClientsView {
                 if button::plain(ui, text) {
                     action = Some(choice);
                 }
+            }
+            if button::plain(ui, "Compras") {
+                self.history = self
+                    .list
+                    .require(env)
+                    .map(|client| ClientHistory::new(ui.ctx(), env, client));
             }
             title::hint(ui, &format!("{total} cliente(s)"));
         });
