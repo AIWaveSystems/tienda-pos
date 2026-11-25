@@ -2,10 +2,16 @@ use super::dialect::Dialect;
 use super::value::{Kind, Row, SqlValue};
 use crate::{Result, StorageError};
 
+#[derive(Clone, Debug)]
+pub enum Check {
+    Stock(String),
+    NotVoided,
+}
+
 pub struct Statement {
     pub sql: String,
     pub values: Vec<SqlValue>,
-    pub required: Option<String>,
+    pub check: Option<Check>,
 }
 
 impl Statement {
@@ -13,18 +19,19 @@ impl Statement {
         Self {
             sql: sql.into(),
             values,
-            required: None,
+            check: None,
         }
     }
 
-    pub fn requiring(mut self, name: &str) -> Self {
-        self.required = Some(name.to_owned());
+    pub fn requiring(mut self, check: Check) -> Self {
+        self.check = Some(check);
         self
     }
 
     pub fn verify(&self, affected: u64) -> Result<()> {
-        match &self.required {
-            Some(name) if affected == 0 => Err(StorageError::Stock(name.clone())),
+        match &self.check {
+            Some(Check::Stock(name)) if affected == 0 => Err(StorageError::Stock(name.clone())),
+            Some(Check::NotVoided) if affected == 0 => Err(StorageError::AlreadyVoided),
             _ => Ok(()),
         }
     }

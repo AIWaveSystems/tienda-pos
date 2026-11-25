@@ -7,10 +7,10 @@ use mongodb::IndexModel;
 use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
 use pos_config::model::MongoSettings;
 use pos_config::BackendKind;
-use pos_domain::{Category, Client, Product, Sale, SaleItem, User};
+use pos_domain::{Category, Client, Product, Sale, StockMovement, User};
 
 use super::repository::MongoRepository;
-use crate::{Repository, Result, StorageError, Store};
+use crate::{Repository, Result, StockOperation, StorageError, Store};
 
 pub struct MongoConnection {
     pub uri: String,
@@ -42,8 +42,9 @@ pub struct MongoStore {
     users: MongoRepository<User>,
     categories: MongoRepository<Category>,
     clients: MongoRepository<Client>,
-    products: MongoRepository<Product>,
-    sales: MongoRepository<Sale>,
+    pub(super) products: MongoRepository<Product>,
+    pub(super) sales: MongoRepository<Sale>,
+    pub(super) movements: MongoRepository<StockMovement>,
 }
 
 impl MongoStore {
@@ -66,6 +67,7 @@ impl MongoStore {
             clients: MongoRepository::new(&database),
             products: MongoRepository::new(&database),
             sales: MongoRepository::new(&database),
+            movements: MongoRepository::new(&database),
             database,
         };
         store.ping()?;
@@ -73,40 +75,12 @@ impl MongoStore {
         Ok(store)
     }
 
-    fn take(&self, item: &SaleItem, allow_negative: bool) -> Result<()> {
-        let mut filter = doc! { "_id": &item.product_id };
-        if !allow_negative {
-            filter.insert("stock", doc! { "$gte": item.quantity });
-        }
-        let matched = self.move_stock(filter, -item.quantity)?;
-        if matched == 0 && !allow_negative {
-            return Err(StorageError::Stock(item.product_name.clone()));
-        }
-        Ok(())
-    }
-
-    fn give_back(&self, items: &[&SaleItem]) -> Result<()> {
-        items.iter().try_for_each(|item| {
-            self.move_stock(doc! { "_id": &item.product_id }, item.quantity)?;
-            Ok(())
-        })
-    }
-
-    fn move_stock(&self, filter: Document, delta: i64) -> Result<u64> {
-        let outcome = self
-            .products
-            .collection()
-            .update_one(filter, doc! { "$inc": { "stock": delta } })
-            .run()
-            .map_err(failure)?;
-        Ok(outcome.matched_count)
-    }
-
     fn create_indexes(&self) -> Result<()> {
         index(self.users.collection(), "username", true)?;
         index(self.clients.collection(), "tax_id", false)?;
         index(self.products.collection(), "barcode", false)?;
         index(self.products.collection(), "category_id", false)?;
+        index(self.movements.collection(), "product_id", false)?;
         index(self.sales.collection(), "created_at", false)?;
         index(self.sales.collection(), "client_id", false)?;
         index(self.sales.collection(), "items.product_id", false)
@@ -138,22 +112,12 @@ impl Store for MongoStore {
         &self.sales
     }
 
-    fn register_sale(&self, sale: &Sale, allow_negative: bool) -> Result<()> {
-        let mut taken = Vec::new();
-        for item in &sale.items {
-            match self.take(item, allow_negative) {
-                Ok(()) => taken.push(item),
-                Err(failure) => {
-                    self.give_back(&taken)?;
-                    return Err(failure);
-                }
-            }
-        }
-        let outcome = self.sales.upsert(sale);
-        if outcome.is_err() {
-            self.give_back(&taken)?;
-        }
-        outcome
+    fn movements(&self) -> &dyn Repository<StockMovement> {
+        &self.movements
+    }
+
+    fn apply_stock(&self, operation: &StockOperation) -> Result<()> {
+        self.apply(operation)
     }
 
     fn ping(&self) -> Result<()> {

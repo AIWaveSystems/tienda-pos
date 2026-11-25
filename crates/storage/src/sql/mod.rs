@@ -1,10 +1,12 @@
 mod dialect;
 mod driver;
+mod migration;
 mod mysql;
 mod postgres;
 mod records;
 mod repository;
 mod schema;
+mod stock;
 mod store;
 mod value;
 pub use store::{SqlConnection, SqlStore};
