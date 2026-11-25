@@ -57,12 +57,21 @@ impl DetailDialog {
                     "Metodo de pago:",
                     self.sale.payment_method.label().to_owned(),
                 ),
+                ("Vendedor:", self.sale.seller.clone()),
+                ("Estado:", self.state()),
             ] {
                 ui.label(RichText::new(label).strong().color(theme::MUTED));
                 ui.label(value);
                 ui.end_row();
             }
         });
+    }
+
+    fn state(&self) -> String {
+        match self.sale.voided_at {
+            Some(moment) => format!("Anulada el {}", format::minute(moment)),
+            None => "Activa".to_owned(),
+        }
     }
 
     fn items(&self, ui: &mut Ui) {
