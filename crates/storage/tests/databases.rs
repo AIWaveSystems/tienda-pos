@@ -7,28 +7,33 @@ use pos_storage::{MongoConnection, MongoStore, SqlConnection, SqlStore, Store};
 
 const PASSWORD: &str = "p@ss:w/rd";
 
-fn port(variable: &str, fallback: u16) -> u16 {
-    env::var(variable)
-        .ok()
-        .and_then(|value| value.parse().ok())
-        .unwrap_or(fallback)
+fn setting(engine: &str, name: &str, fallback: &str) -> String {
+    env::var(format!("POS_TEST_{engine}_{name}")).unwrap_or_else(|_| fallback.to_owned())
 }
 
-fn sql(port: u16) -> SqlConnection {
+fn sql(engine: &str, port: &str) -> SqlConnection {
     let settings = SqlSettings {
-        host: "127.0.0.1".into(),
-        port,
-        database: "pos".into(),
-        user: "pos".into(),
+        host: setting(engine, "HOST", "127.0.0.1"),
+        port: setting(engine, "PORT", port).parse().unwrap(),
+        database: setting(engine, "DATABASE", "pos"),
+        user: setting(engine, "USER", "pos"),
         ssl: false,
     };
-    SqlConnection::new(&settings, PASSWORD)
+    assert_disposable(&settings.database);
+    SqlConnection::new(&settings, &setting(engine, "PASSWORD", PASSWORD))
+}
+
+fn assert_disposable(database: &str) {
+    assert!(
+        database == "pos" || database.ends_with("_test"),
+        "las pruebas borran datos: use una base terminada en _test"
+    );
 }
 
 #[test]
 #[ignore = "requiere un servidor MySQL"]
 fn mysql_fulfills_the_contract() {
-    let connection = sql(port("POS_TEST_MYSQL_PORT", 33306));
+    let connection = sql("MYSQL", "33306");
     common::contract(&SqlStore::mysql(&connection).unwrap());
     let reopened = SqlStore::mysql(&connection).unwrap();
     reopened.ping().unwrap();
@@ -39,7 +44,7 @@ fn mysql_fulfills_the_contract() {
 #[test]
 #[ignore = "requiere un servidor PostgreSQL"]
 fn postgres_fulfills_the_contract() {
-    let connection = sql(port("POS_TEST_POSTGRES_PORT", 35432));
+    let connection = sql("POSTGRES", "35432");
     common::contract(&SqlStore::postgres(&connection).unwrap());
     let reopened = SqlStore::postgres(&connection).unwrap();
     reopened.ping().unwrap();
@@ -51,20 +56,21 @@ fn postgres_fulfills_the_contract() {
 #[ignore = "requiere un servidor MongoDB"]
 fn mongo_fulfills_the_contract() {
     let settings = MongoSettings {
-        host: "127.0.0.1".into(),
-        port: port("POS_TEST_MONGO_PORT", 37017),
-        database: "pos".into(),
-        user: "pos".into(),
+        host: setting("MONGO", "HOST", "127.0.0.1"),
+        port: setting("MONGO", "PORT", "37017").parse().unwrap(),
+        database: setting("MONGO", "DATABASE", "pos"),
+        user: setting("MONGO", "USER", "pos"),
         use_srv: false,
     };
-    let connection = MongoConnection::new(&settings, PASSWORD);
+    assert_disposable(&settings.database);
+    let connection = MongoConnection::new(&settings, &setting("MONGO", "PASSWORD", PASSWORD));
     common::contract(&MongoStore::connect(&connection).unwrap());
     MongoStore::connect(&connection).unwrap();
 }
 
 #[test]
 fn missing_database_is_a_configuration_error() {
-    let mut connection = sql(1);
+    let mut connection = sql("NONE", "1");
     connection.database.clear();
     assert!(SqlStore::mysql(&connection).is_err());
     assert!(SqlStore::postgres(&connection).is_err());
