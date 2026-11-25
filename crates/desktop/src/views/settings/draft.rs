@@ -5,6 +5,8 @@ use pos_config::{AppConfig, PrinterFormat};
 use pos_domain::PaymentMethod;
 use rust_decimal::Decimal;
 
+use crate::theme;
+
 pub struct Draft {
     pub general: General,
     pub inventory: Inventory,
@@ -13,6 +15,7 @@ pub struct Draft {
     pub min_stock: String,
     pub method: usize,
     pub format: usize,
+    pub theme: usize,
     pub width: String,
     pub height: String,
     pub sidebar: String,
@@ -30,6 +33,10 @@ impl Draft {
             min_stock: config.inventory.min_stock_alert.to_string(),
             method: position(&PaymentMethod::ALL, config.sales.default_payment_method),
             format: position(&PrinterFormat::ALL, config.sales.printer_format),
+            theme: theme::NAMES
+                .iter()
+                .position(|(key, _)| *key == config.ui.theme)
+                .unwrap_or_default(),
             width: config.ui.window_width.to_string(),
             height: config.ui.window_height.to_string(),
             sidebar: config.ui.sidebar_width.to_string(),
@@ -50,6 +57,13 @@ impl Draft {
             .collect()
     }
 
+    pub fn themes() -> Vec<String> {
+        theme::NAMES
+            .iter()
+            .map(|(_, label)| (*label).to_owned())
+            .collect()
+    }
+
     pub fn apply(&self, config: &mut AppConfig) -> Result<(), String> {
         config.general = self.general.clone();
         config.general.tax_rate = self.tax_rate()?;
@@ -62,6 +76,7 @@ impl Draft {
         config.sales = self.sales.clone();
         config.sales.default_payment_method = PaymentMethod::ALL[self.method];
         config.sales.printer_format = PrinterFormat::ALL[self.format];
+        config.ui.theme = theme::NAMES[self.theme].0.to_owned();
         config.ui.window_width = whole(&self.width, "ancho de ventana", 640, 3840)?;
         config.ui.window_height = whole(&self.height, "alto de ventana", 480, 2160)?;
         config.ui.sidebar_width = whole(&self.sidebar, "ancho del menu lateral", 150, 400)?;
