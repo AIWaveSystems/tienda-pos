@@ -18,6 +18,8 @@ pub mod permission;
 pub use permission::Permission;
 mod role;
 pub use role::Role;
+mod movement;
 pub mod password;
+pub use movement::{MovementKind, StockMovement};
 mod user;
 pub use user::User;
