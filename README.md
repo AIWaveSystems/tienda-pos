@@ -15,6 +15,13 @@ en Python por [Ilesandres](https://github.com/Ilesandres).
 
 El port se construye primero hasta igualar al original y despues se mejora.
 
+## Ademas del original
+
+- Anulacion de ventas y movimientos de inventario con autor.
+- Punto de venta con catalogo, cambio y notas.
+- Informes por periodo con grafico, utilidad estimada y vendedores.
+- Tema claro y oscuro, columnas ordenables y exportacion a CSV.
+
 ## Almacenamientos
 
 | Motor | Modelo |
@@ -77,6 +84,10 @@ cargo test --workspace
 docker compose up --detach --wait
 cargo test -p pos-storage --test databases -- --include-ignored
 ```
+
+Para usar un servidor propio se definen `POS_TEST_POSTGRES_HOST`, `_PORT`,
+`_USER`, `_PASSWORD` y `_DATABASE`. Las pruebas borran datos: la base debe
+terminar en `_test`.
 
 El estado real de cada comprobacion esta en `.agents/parity.md`.
 
