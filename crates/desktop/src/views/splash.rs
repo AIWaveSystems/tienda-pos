@@ -32,26 +32,29 @@ impl SplashView {
                 ui.add(Image::new(logo).fit_to_exact_size([88.0, 88.0].into()));
             }
             ui.label(RichText::new("Ventas POS").size(26.0).strong());
-            ui.label(RichText::new("Sistema de punto de venta e inventario").color(theme::SUBTLE));
+            ui.label(
+                RichText::new("Sistema de punto de venta e inventario")
+                    .color(theme::palette().subtle),
+            );
             ui.add_space(16.0);
             match &self.failure {
                 Some(failure) => {
-                    ui.label(RichText::new(failure).color(theme::DANGER));
+                    ui.label(RichText::new(failure).color(theme::palette().danger));
                 }
                 None => {
                     ui.add(
                         ProgressBar::new(fraction)
                             .desired_width(340.0)
                             .desired_height(5.0)
-                            .fill(theme::ACCENT),
+                            .fill(theme::palette().accent),
                     );
-                    ui.label(RichText::new(message).color(theme::MUTED));
+                    ui.label(RichText::new(message).color(theme::palette().muted));
                 }
             }
             ui.label(
                 RichText::new(concat!("v", env!("CARGO_PKG_VERSION")))
                     .small()
-                    .color(theme::SUBTLE),
+                    .color(theme::palette().subtle),
             );
         });
     }

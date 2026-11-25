@@ -60,7 +60,7 @@ impl DetailDialog {
                 ("Vendedor:", self.sale.seller.clone()),
                 ("Estado:", self.state()),
             ] {
-                ui.label(RichText::new(label).strong().color(theme::MUTED));
+                ui.label(RichText::new(label).strong().color(theme::palette().muted));
                 ui.label(value);
                 ui.end_row();
             }
@@ -98,10 +98,10 @@ impl DetailDialog {
         card::surface(ui, |ui| {
             Grid::new("sale_totals").num_columns(2).show(ui, |ui| {
                 for (label, value, color) in [
-                    ("Subtotal:", self.sale.subtotal, theme::MUTED),
-                    ("Impuesto:", self.sale.tax, theme::MUTED),
-                    ("Descuento:", -self.sale.discount, theme::DANGER),
-                    ("Total:", self.sale.total, theme::SUCCESS),
+                    ("Subtotal:", self.sale.subtotal, theme::palette().muted),
+                    ("Impuesto:", self.sale.tax, theme::palette().muted),
+                    ("Descuento:", -self.sale.discount, theme::palette().danger),
+                    ("Total:", self.sale.total, theme::palette().success),
                 ] {
                     ui.label(label);
                     ui.label(RichText::new(format::amount(value)).color(color));

@@ -32,7 +32,7 @@ impl<'a> Dialog<'a> {
     pub fn show(&self, ctx: &Context, body: impl FnOnce(&mut Ui)) -> DialogEvent {
         let mut event = DialogEvent::None;
         let frame = Frame::popup(&ctx.style())
-            .fill(theme::BG)
+            .fill(theme::palette().bg)
             .inner_margin(Margin::same(24));
         let modal = Modal::new(Id::new(("dialog", self.title)))
             .frame(frame)
@@ -42,7 +42,7 @@ impl<'a> Dialog<'a> {
                     RichText::new(self.title)
                         .size(18.0)
                         .strong()
-                        .color(theme::ACCENT),
+                        .color(theme::palette().accent),
                 );
                 ui.add_space(6.0);
                 ScrollArea::vertical()
@@ -53,7 +53,7 @@ impl<'a> Dialog<'a> {
                     });
                 ui.add_space(10.0);
                 if !self.error.is_empty() {
-                    ui.label(RichText::new(self.error).color(theme::DANGER));
+                    ui.label(RichText::new(self.error).color(theme::palette().danger));
                 }
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     if button::accent(ui, self.accept) {

@@ -48,7 +48,11 @@ impl Paginator {
         if select(ui, "page_size", &options, &mut self.choice, 80.0) {
             self.page = 0;
         }
-        ui.label(RichText::new("por pagina").small().color(theme::SUBTLE));
+        ui.label(
+            RichText::new("por pagina")
+                .small()
+                .color(theme::palette().subtle),
+        );
         let last = self.pages(total) - 1;
         let shown = self.range(total);
         if step(ui, "<<", self.page > 0) {
@@ -57,7 +61,9 @@ impl Paginator {
         if step(ui, "<", self.page > 0) {
             self.previous();
         }
-        ui.label(RichText::new(summary(&shown, total, self.page, last)).color(theme::MUTED));
+        ui.label(
+            RichText::new(summary(&shown, total, self.page, last)).color(theme::palette().muted),
+        );
         if step(ui, ">", self.page < last) {
             self.next();
         }

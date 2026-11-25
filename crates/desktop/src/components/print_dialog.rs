@@ -27,7 +27,7 @@ impl PrintDialog {
             started: false,
             options: vec![BROWSER.to_owned()],
             selected: 0,
-            status: (String::new(), theme::FG),
+            status: (String::new(), theme::palette().fg),
         }
     }
 
@@ -56,6 +56,9 @@ impl PrintDialog {
                 }
                 if button::plain(ui, "Guardar como...") {
                     self.save();
+                }
+                if self.document.csv.is_some() && button::plain(ui, "Exportar CSV") {
+                    self.export();
                 }
             });
             title::status(ui, &self.status.0, self.status.1);
@@ -89,11 +92,11 @@ impl PrintDialog {
         self.status = match print::preview(&self.document) {
             Ok(()) => (
                 "Vista previa abierta en el navegador".to_owned(),
-                theme::SUCCESS,
+                theme::palette().success,
             ),
             Err(failure) => (
                 format!("No se pudo abrir la vista previa: {failure}"),
-                theme::DANGER,
+                theme::palette().danger,
             ),
         };
     }
@@ -105,12 +108,32 @@ impl PrintDialog {
             return;
         }
         self.status = match print::print(&self.document, &printer) {
-            Ok(PrintOutcome::Sent) => (format!("Enviado a {printer}"), theme::SUCCESS),
+            Ok(PrintOutcome::Sent) => (format!("Enviado a {printer}"), theme::palette().success),
             Ok(PrintOutcome::OpenedInBrowser) => (
                 format!("No se pudo enviar a {printer}. Se abrio en el navegador."),
-                theme::WARNING,
+                theme::palette().warning,
             ),
-            Err(failure) => (failure.to_string(), theme::DANGER),
+            Err(failure) => (failure.to_string(), theme::palette().danger),
+        };
+    }
+
+    fn export(&mut self) {
+        let Some(content) = &self.document.csv else {
+            return;
+        };
+        let Some(path) = rfd::FileDialog::new()
+            .set_file_name(format!("{}.csv", self.document.file_name()))
+            .add_filter("CSV", &["csv"])
+            .save_file()
+        else {
+            return;
+        };
+        self.status = match print::export(content, &path) {
+            Ok(()) => (
+                format!("Exportado a {}", path.display()),
+                theme::palette().success,
+            ),
+            Err(failure) => (failure.to_string(), theme::palette().danger),
         };
     }
 
@@ -123,8 +146,11 @@ impl PrintDialog {
             return;
         };
         self.status = match print::save(&self.document, &path) {
-            Ok(()) => (format!("Guardado en {}", path.display()), theme::SUCCESS),
-            Err(failure) => (failure.to_string(), theme::DANGER),
+            Ok(()) => (
+                format!("Guardado en {}", path.display()),
+                theme::palette().success,
+            ),
+            Err(failure) => (failure.to_string(), theme::palette().danger),
         };
     }
 }

@@ -34,7 +34,7 @@ impl LoginView {
                 RichText::new("Ventas POS")
                     .size(30.0)
                     .strong()
-                    .color(theme::ACCENT),
+                    .color(theme::palette().accent),
             );
             title::hint(ui, "Sistema de punto de venta e inventario");
             ui.add_space(18.0);
@@ -62,7 +62,7 @@ impl LoginView {
         if idle && !input::modal_open(ui.ctx()) && (clicked || submitted) {
             self.submit(ui, env);
         }
-        title::status(ui, &self.error, theme::DANGER);
+        title::status(ui, &self.error, theme::palette().danger);
     }
 
     fn submit(&mut self, ui: &Ui, env: &Env) {

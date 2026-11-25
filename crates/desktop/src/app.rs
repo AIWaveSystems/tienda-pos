@@ -4,6 +4,7 @@ use pos_config::{ConfigStore, CredentialStore};
 use crate::boot::{self, Booted, Progress};
 use crate::components::confirm::Confirm;
 use crate::components::notice::Notice;
+use crate::components::toast;
 use crate::env::Env;
 use crate::task::Task;
 use crate::views::change_password::ChangePasswordView;
@@ -57,6 +58,7 @@ impl App {
                     store: self.store.clone(),
                     credentials: self.credentials.clone(),
                     notices: Vec::new(),
+                    toasts: Vec::new(),
                     printing: None,
                 };
                 if let Some(text) = booted.warning {
@@ -112,6 +114,7 @@ impl App {
 
     fn show_overlays(&mut self, ctx: &Context) {
         if let Some(env) = &mut self.env {
+            toast::show(ctx, &mut env.toasts);
             if let Some(mut dialog) = env.printing.take() {
                 if dialog.show(ctx) {
                     env.printing = Some(dialog);

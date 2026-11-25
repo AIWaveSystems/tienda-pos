@@ -199,6 +199,6 @@ fn cells(item: &Product, names: &HashMap<String, String>) -> Row {
             item.min_stock.to_string(),
             item.barcode.clone(),
         ],
-        color: item.low_stock().then_some(theme::WARNING),
+        color: item.low_stock().then_some(theme::palette().warning),
     }
 }
