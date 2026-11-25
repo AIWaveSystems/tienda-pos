@@ -153,6 +153,8 @@ fn every_view_opens() {
         (Route::Clients, "Ana"),
         (Route::NewSale, "Confirmar Venta"),
         (Route::History, "Sin registros"),
+        (Route::Cash, "Balance"),
+        (Route::Daily, "Arqueo de efectivo"),
         (Route::Reports, "Estado del Inventario"),
         (Route::Users, "Sesion actual"),
         (Route::Settings, "Datos del negocio"),
@@ -249,4 +251,28 @@ fn passwords_can_be_shown_and_hidden() {
     assert!(!hidden(&desk));
     desk.click("Ocultar contrasena");
     assert!(hidden(&desk));
+}
+
+#[test]
+fn cash_reaches_the_daily_report() {
+    let mut desk = Desk::start();
+    desk.sign_in();
+    desk.open(Route::Cash.label());
+    desk.wait_for("0 movimiento(s)");
+    desk.click("+ Gasto");
+    desk.click("Guardar");
+    desk.wait_for("El valor debe ser un numero");
+    desk.write("Concepto *", "Servicio de luz");
+    desk.write("Valor *", "250,50");
+    desk.click("Guardar");
+    desk.wait_for("1 movimiento(s)");
+    desk.open(Route::Daily.label());
+    desk.wait_for("Efectivo esperado: -250.50");
+    desk.click("<");
+    desk.wait_for("a 24:00");
+    desk.wait_for("Efectivo esperado: 0.00");
+    desk.click("Hoy");
+    desk.wait_for("Efectivo esperado: -250.50");
+    desk.click(">");
+    desk.wait_for("La fecha no puede ser futura");
 }

@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
 use pos_config::BackendKind;
-use pos_domain::{Category, Client, Product, Sale, StockMovement, User};
+use pos_domain::{CashEntry, Category, Client, Product, Sale, StockMovement, User};
 
 use super::{DocumentRepository, FileBackend, LocalFiles};
 use crate::{Repository, Result, StockOperation, Store};
@@ -16,6 +16,7 @@ pub struct DocumentStore {
     pub(super) products: DocumentRepository<Product>,
     pub(super) sales: DocumentRepository<Sale>,
     pub(super) movements: DocumentRepository<StockMovement>,
+    cash: DocumentRepository<CashEntry>,
 }
 
 impl DocumentStore {
@@ -26,6 +27,7 @@ impl DocumentStore {
             categories: DocumentRepository::new(files.clone(), lock.clone()),
             clients: DocumentRepository::new(files.clone(), lock.clone()),
             products: DocumentRepository::new(files.clone(), lock.clone()),
+            cash: DocumentRepository::new(files.clone(), lock.clone()),
             movements: DocumentRepository::new(files.clone(), lock.clone()),
             sales: DocumentRepository::new(files.clone(), lock.clone()),
             files,
@@ -65,6 +67,10 @@ impl Store for DocumentStore {
 
     fn movements(&self) -> &dyn Repository<StockMovement> {
         &self.movements
+    }
+
+    fn cash(&self) -> &dyn Repository<CashEntry> {
+        &self.cash
     }
 
     fn apply_stock(&self, operation: &StockOperation) -> Result<()> {

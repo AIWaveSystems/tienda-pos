@@ -8,7 +8,8 @@ use serde_json::{Map, Value};
 
 use crate::{Result, StorageError};
 
-const MONEY: [&str; 7] = [
+const MONEY: [&str; 8] = [
+    "amount",
     "price",
     "cost",
     "unit_price",

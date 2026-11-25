@@ -32,7 +32,11 @@ pub fn show(ui: &mut Ui, env: &Env, current: Option<Route>) -> SidebarEvent {
     ui.add_space(8.0);
     ui.separator();
     ui.spacing_mut().item_spacing.y = 0.0;
-    for route in Route::available(env) {
+    let routes = Route::available(env);
+    let reserved = 110.0;
+    let height =
+        ((ui.available_height() - reserved) / routes.len().max(1) as f32).clamp(26.0, 38.0);
+    for route in routes {
         let selected = current == Some(route);
         let color = if selected {
             theme::palette().accent
@@ -40,15 +44,15 @@ pub fn show(ui: &mut Ui, env: &Env, current: Option<Route>) -> SidebarEvent {
             theme::palette().fg
         };
         let label = format!("{}  {}", route.icon(), route.label());
-        if entry(ui, &label, color, selected) {
+        if entry(ui, &label, color, selected, height) {
             event = SidebarEvent::Open(route);
         }
     }
     ui.with_layout(Layout::bottom_up(Align::Min), |ui| {
-        if entry(ui, "Cerrar sesion", theme::palette().danger, false) {
+        if entry(ui, "Cerrar sesion", theme::palette().danger, false, 36.0) {
             event = SidebarEvent::Logout;
         }
-        if entry(ui, "Mi Perfil", theme::palette().muted, false) {
+        if entry(ui, "Mi Perfil", theme::palette().muted, false, 36.0) {
             event = SidebarEvent::Profile;
         }
         ui.separator();
@@ -56,13 +60,13 @@ pub fn show(ui: &mut Ui, env: &Env, current: Option<Route>) -> SidebarEvent {
     event
 }
 
-fn entry(ui: &mut Ui, text: &str, color: Color32, selected: bool) -> bool {
+fn entry(ui: &mut Ui, text: &str, color: Color32, selected: bool, height: f32) -> bool {
     let fill = if selected {
         theme::palette().surface
     } else {
         theme::palette().sidebar
     };
-    let size = Vec2::new(ui.available_width(), 38.0);
+    let size = Vec2::new(ui.available_width(), height);
     let button = Button::new(RichText::new(format!("   {text}")).color(color))
         .fill(fill)
         .stroke(eframe::egui::Stroke::NONE)

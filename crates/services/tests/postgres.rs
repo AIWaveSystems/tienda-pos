@@ -2,8 +2,8 @@ use std::env;
 use std::sync::Arc;
 
 use pos_config::model::SqlSettings;
-use pos_domain::{Product, Sale, SaleItem};
-use pos_services::{Period, Services};
+use pos_domain::{now, CashEntry, CashKind, Product, Sale, SaleItem};
+use pos_services::{Period, Services, Span};
 use pos_storage::{SqlConnection, SqlStore, Store};
 use rust_decimal::Decimal;
 
@@ -30,6 +30,7 @@ fn clean(store: &dyn Store) {
     store.products().replace_all(&[]).unwrap();
     store.sales().replace_all(&[]).unwrap();
     store.movements().replace_all(&[]).unwrap();
+    store.cash().replace_all(&[]).unwrap();
 }
 
 #[test]
@@ -75,6 +76,18 @@ fn a_business_day_on_postgres() {
     assert_eq!(overview.sales.count, 1);
     assert_eq!(overview.sales.total, kept.total);
     assert_eq!(overview.sellers[0].name, "Ana");
+    services
+        .cash
+        .register(CashEntry {
+            kind: CashKind::Gasto,
+            concept: "Luz".into(),
+            amount: Decimal::from(5),
+            ..CashEntry::default()
+        })
+        .unwrap();
+    let daily = services.reports.daily(Span::today(now())).unwrap();
+    assert_eq!(daily.voided, 1);
+    assert_eq!(daily.balance(), kept.total - Decimal::from(5));
     clean(store.as_ref());
     services.close();
 }

@@ -11,13 +11,15 @@ pub enum Route {
     Clients,
     NewSale,
     History,
+    Cash,
+    Daily,
     Reports,
     Users,
     Settings,
 }
 
 impl Route {
-    pub const ALL: [Self; 10] = [
+    pub const ALL: [Self; 12] = [
         Self::Dashboard,
         Self::Inventory,
         Self::Categories,
@@ -25,6 +27,8 @@ impl Route {
         Self::Clients,
         Self::NewSale,
         Self::History,
+        Self::Cash,
+        Self::Daily,
         Self::Reports,
         Self::Users,
         Self::Settings,
@@ -34,6 +38,7 @@ impl Route {
         match self {
             Self::Categories => "Categorias",
             Self::Movements => "Movimientos",
+            Self::Daily => "Informe diario",
             other => other.permission().label(),
         }
     }
@@ -47,6 +52,8 @@ impl Route {
             Self::Clients => "👥",
             Self::NewSale => "💳",
             Self::History => "📋",
+            Self::Cash => "💰",
+            Self::Daily => "📅",
             Self::Reports => "📊",
             Self::Users => "👤",
             Self::Settings => "⚙",
@@ -60,7 +67,8 @@ impl Route {
             Self::Clients => Permission::Clientes,
             Self::NewSale => Permission::Ventas,
             Self::History => Permission::Historial,
-            Self::Reports => Permission::Informes,
+            Self::Cash => Permission::Caja,
+            Self::Reports | Self::Daily => Permission::Informes,
             Self::Users => Permission::Usuarios,
             Self::Settings => Permission::Configuracion,
         }

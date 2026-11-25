@@ -1,11 +1,14 @@
 use std::sync::Arc;
 
 use pos_config::{AppConfig, PrinterFormat};
-use pos_domain::{Category, Client, Permission, Product, Role, Sale, SaleItem};
-use pos_services::{
-    client, format, inventory, print, sales, Period, SaleFilter, Services, UserDraft,
+use pos_domain::{
+    now, CashEntry, CashKind, Category, Client, PaymentMethod, Permission, Product, Role, Sale,
+    SaleItem,
 };
-use pos_storage::DocumentStore;
+use pos_services::{
+    client, format, inventory, print, sales, Period, SaleFilter, Services, Span, UserDraft,
+};
+use pos_storage::{DocumentStore, Store};
 use rust_decimal::Decimal;
 
 fn services() -> (tempfile::TempDir, Services) {
@@ -272,4 +275,81 @@ fn discounts_cannot_exceed_the_total() {
         };
         assert!(services.sales.register(sale, Decimal::ZERO, false).is_err());
     }
+}
+
+fn movement(kind: CashKind, concept: &str, amount: i64) -> CashEntry {
+    CashEntry {
+        kind,
+        concept: concept.into(),
+        amount: amount.into(),
+        ..CashEntry::default()
+    }
+}
+
+#[test]
+fn cash_entries_are_validated_and_voided_once() {
+    let (_folder, services) = services();
+    let cash = &services.cash;
+    assert!(cash.register(movement(CashKind::Gasto, " ", 10)).is_err());
+    assert!(cash.register(movement(CashKind::Gasto, "Luz", 0)).is_err());
+    assert!(cash.register(movement(CashKind::Gasto, "Luz", -5)).is_err());
+    let entry = cash.register(movement(CashKind::Gasto, "Luz", 10)).unwrap();
+    cash.void(&entry.id).unwrap();
+    assert!(cash.void(&entry.id).is_err());
+    assert!(cash.void("ausente").is_err());
+}
+
+#[test]
+fn the_daily_report_balances_the_day() {
+    let (_folder, services) = services();
+    let bread = services.inventory.save(product("Pan", 50)).unwrap();
+    let sell = |method: PaymentMethod| {
+        let sale = Sale {
+            items: vec![SaleItem::new(&bread.id, "Pan", 2, bread.price)],
+            payment_method: method,
+            ..Sale::default()
+        };
+        services.sales.register(sale, Decimal::ZERO, false).unwrap()
+    };
+    sell(PaymentMethod::Efectivo);
+    sell(PaymentMethod::TarjetaDebito);
+    let voided = sell(PaymentMethod::Efectivo);
+    services.sales.void(voided, "ana").unwrap();
+    let cash = &services.cash;
+    cash.register(movement(CashKind::Entrada, "Base", 500))
+        .unwrap();
+    cash.register(movement(CashKind::Gasto, "Luz", 120))
+        .unwrap();
+    let removed = cash
+        .register(movement(CashKind::Gasto, "Error", 999))
+        .unwrap();
+    cash.void(&removed.id).unwrap();
+    let report = services.reports.daily(Span::today(now())).unwrap();
+    assert_eq!(report.summary.count, 2);
+    assert_eq!(report.voided, 1);
+    assert_eq!(report.income, Decimal::from(500));
+    assert_eq!(report.expense, Decimal::from(120));
+    assert_eq!(report.balance(), Decimal::from(780));
+    assert_eq!(report.expected_cash(), Decimal::from(580));
+    assert_eq!(report.hours.iter().map(|hour| hour.count).sum::<usize>(), 2);
+    let yesterday = now().date().pred_opt().unwrap();
+    let empty = services.reports.daily(Span::day(yesterday)).unwrap();
+    assert_eq!(empty.summary.count, 0);
+    assert!(empty.entries.is_empty());
+    let document = print::daily_report(&report, &AppConfig::default());
+    assert!(document.html.contains("Base") && !document.html.contains("Error"));
+}
+
+#[test]
+fn backups_contain_every_collection() {
+    let (folder, services) = services();
+    services.inventory.save(product("Pan", 5)).unwrap();
+    services
+        .cash
+        .register(movement(CashKind::Gasto, "Luz", 1))
+        .unwrap();
+    let target = services.backup(&folder.path().join("copias")).unwrap();
+    let copy = DocumentStore::local(target).unwrap();
+    assert_eq!(copy.products().count().unwrap(), 1);
+    assert_eq!(copy.cash().count().unwrap(), 1);
 }

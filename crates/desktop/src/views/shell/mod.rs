@@ -4,9 +4,11 @@ use eframe::egui::{CentralPanel, Context, Frame, Key, Margin, RichText, SidePane
 
 use crate::components::confirm::Confirm;
 use crate::env::Env;
+use crate::views::cash::CashView;
 use crate::views::categories::CategoriesView;
 use crate::views::clients::ClientsView;
 use crate::views::command_palette::{CommandPalette, PaletteEvent};
+use crate::views::daily::DailyView;
 use crate::views::dashboard::DashboardView;
 use crate::views::history::HistoryView;
 use crate::views::inventory::InventoryView;
@@ -124,6 +126,8 @@ impl Shell {
             Route::Clients => Box::new(ClientsView::new(ctx, env)),
             Route::NewSale => Box::new(NewSaleView::new(ctx, env)),
             Route::History => Box::new(HistoryView::new(ctx, env)),
+            Route::Cash => Box::new(CashView::new(ctx, env)),
+            Route::Daily => Box::new(DailyView::new(ctx, env)),
             Route::Reports => Box::new(ReportsView::new(ctx, env)),
             Route::Users => Box::new(UsersView::new(ctx, env)),
             Route::Settings => Box::new(SettingsView::new(env)),

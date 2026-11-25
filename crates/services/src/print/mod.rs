@@ -1,4 +1,6 @@
 mod csv;
+mod daily;
+pub use daily::daily_report;
 mod document;
 mod style;
 pub use document::Document;

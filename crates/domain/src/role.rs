@@ -52,7 +52,7 @@ impl Role {
         use Permission::*;
         match self {
             Self::Admin => Permission::ALL.to_vec(),
-            Self::Vendedor => vec![Dashboard, Clientes, Ventas, Historial],
+            Self::Vendedor => vec![Dashboard, Clientes, Ventas, Historial, Caja],
             Self::Bodega => vec![Dashboard, Inventario, Informes],
             Self::Personalizado => Vec::new(),
         }

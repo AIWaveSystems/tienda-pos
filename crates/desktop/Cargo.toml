@@ -10,6 +10,7 @@ name = "ventas-pos"
 path = "src/main.rs"
 
 [dependencies]
+chrono.workspace = true
 eframe = { version = "0.31", default-features = false, features = ["accesskit", "default_fonts", "glow", "wayland", "x11"] }
 egui_extras = "0.31"
 image = { version = "0.25", default-features = false, features = ["png"] }

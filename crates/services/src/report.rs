@@ -6,7 +6,8 @@ use pos_domain::{now, Product, Sale};
 use pos_storage::Store;
 use rust_decimal::Decimal;
 
-use crate::{Period, Result};
+use crate::daily::DailyReport;
+use crate::{Period, Result, Span};
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct SalesSummary {
@@ -78,6 +79,15 @@ impl ReportService {
         })
     }
 
+    pub fn daily(&self, span: Span) -> Result<DailyReport> {
+        Ok(DailyReport::build(
+            span,
+            self.store.sales().all()?,
+            self.store.cash().all()?,
+            &self.store.products().all()?,
+        ))
+    }
+
     pub fn client_summary(&self, client_id: &str) -> Result<SalesSummary> {
         let mut sales = self.store.sales().all()?;
         sales.retain(|sale| sale.client_id == client_id && !sale.is_voided());
@@ -147,7 +157,7 @@ fn sellers(sales: &[Sale]) -> Vec<SellerSales> {
     ranked
 }
 
-fn profit(sales: &[Sale], products: &[Product]) -> Decimal {
+pub(crate) fn profit(sales: &[Sale], products: &[Product]) -> Decimal {
     let costs: HashMap<&str, Decimal> = products
         .iter()
         .map(|product| (product.id.as_str(), product.cost))

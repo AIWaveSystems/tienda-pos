@@ -1,6 +1,6 @@
 use pos_domain::{
-    now, Category, Client, Entity, MovementKind, PaymentMethod, Permission, Product, Role, Sale,
-    SaleItem, StockMovement, User,
+    now, CashEntry, CashKind, Category, Client, Entity, MovementKind, PaymentMethod, Permission,
+    Product, Role, Sale, SaleItem, StockMovement, User,
 };
 use pos_storage::{Repository, SaleChange, StockOperation, StorageError, Store};
 use rust_decimal::Decimal;
@@ -81,6 +81,17 @@ pub fn contract(store: &dyn Store) {
     let mut changed = product.clone();
     changed.stock = -3;
     exercise(store.products(), product, Product::default(), changed);
+
+    let entry = CashEntry {
+        kind: CashKind::Entrada,
+        concept: "Base".into(),
+        amount: Decimal::new(123_456, 2),
+        payment_method: PaymentMethod::Transferencia,
+        ..CashEntry::default()
+    };
+    let mut changed = entry.clone();
+    changed.voided_at = Some(changed.created_at);
+    exercise(store.cash(), entry, CashEntry::default(), changed);
 
     let mut sale = Sale {
         client_name: "Sin cliente".into(),
