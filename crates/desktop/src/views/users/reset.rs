@@ -43,10 +43,10 @@ impl ResetDialog {
             self.error = failure.to_string();
             return true;
         }
-        env.info(
-            "Listo",
-            format!("Contrasena de '{}' actualizada.", self.user.username),
-        );
+        env.toast(format!(
+            "Contrasena de '{}' actualizada.",
+            self.user.username
+        ));
         false
     }
 }
