@@ -1,4 +1,4 @@
-use super::schema::Table;
+use super::schema::{Column, Table};
 use super::value::Kind;
 
 #[derive(Clone, Copy, PartialEq)]
@@ -92,6 +92,35 @@ impl Dialect {
             }));
         }
         statements
+    }
+
+    pub fn columns_query(self) -> &'static str {
+        match self {
+            Self::MySql => {
+                "SELECT CAST(column_name AS CHAR(128)) FROM information_schema.columns \
+                 WHERE table_schema = DATABASE() AND table_name = ?"
+            }
+            Self::Postgres => {
+                "SELECT CAST(column_name AS VARCHAR(128)) FROM information_schema.columns \
+                 WHERE table_schema = current_schema() AND table_name = $1"
+            }
+        }
+    }
+
+    pub fn add_column(self, table: &Table, column: &Column) -> String {
+        let default = match column.kind {
+            Kind::Id | Kind::Short | Kind::Long => " DEFAULT ('')",
+            Kind::Int | Kind::Money => " DEFAULT 0",
+            Kind::Bool => " DEFAULT FALSE",
+            Kind::Moment => " DEFAULT CURRENT_TIMESTAMP",
+            Kind::OptionalMoment => "",
+        };
+        format!(
+            "ALTER TABLE {} ADD COLUMN {} {}{default}",
+            table.name,
+            column.name,
+            self.column_type(column.kind)
+        )
     }
 
     fn column_type(self, kind: Kind) -> &'static str {
