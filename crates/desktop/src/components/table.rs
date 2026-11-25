@@ -74,6 +74,17 @@ pub struct Grid<'a> {
 
 impl Grid<'_> {
     pub fn show(&self, ui: &mut Ui, height: f32) -> TableEvent {
+        ui.push_id(self.id, |ui| self.build(ui, height)).inner
+    }
+
+    fn scale(&self, available: f32) -> f32 {
+        let gaps = 10.0 * self.columns.len() as f32;
+        let wanted: f32 = self.columns.iter().map(|column| column.width).sum();
+        ((available - gaps) / wanted).min(1.0)
+    }
+
+    fn build(&self, ui: &mut Ui, height: f32) -> TableEvent {
+        let scale = self.scale(ui.available_width());
         let Self {
             id,
             columns,
@@ -93,9 +104,11 @@ impl Grid<'_> {
             .max_scroll_height(height);
         for (index, column) in columns.iter().enumerate() {
             builder = builder.column(if index == 0 {
-                Width::remainder().at_least(column.width).clip(true)
+                Width::remainder().at_least(column.width * scale).clip(true)
             } else {
-                Width::initial(column.width).at_least(40.0).clip(true)
+                Width::initial(column.width * scale)
+                    .at_least(40.0)
+                    .clip(true)
             });
         }
         builder
