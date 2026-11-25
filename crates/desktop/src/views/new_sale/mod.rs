@@ -22,7 +22,7 @@ use payment::Payment;
 use quantity::QuantityDialog;
 
 const WITHOUT_CLIENT: &str = "Sin cliente";
-const PANEL_WIDTH: f32 = 350.0;
+const PANEL_WIDTH: f32 = 380.0;
 
 struct Loaded {
     products: Vec<Product>,

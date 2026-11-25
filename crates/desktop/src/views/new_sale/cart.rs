@@ -112,7 +112,7 @@ fn line(ui: &mut Ui, index: usize, item: &SaleItem, selected: bool) -> Option<Ca
                 }
                 title::hint(ui, &format!("x {}", format::amount(item.unit_price)));
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    if ui.small_button("Quitar").clicked() {
+                    if ui.small_button("x").on_hover_text("Quitar").clicked() {
                         event = Some(CartEvent::Remove(index));
                     }
                     ui.label(format::amount(item.subtotal));
