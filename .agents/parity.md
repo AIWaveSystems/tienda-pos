@@ -22,17 +22,31 @@ Referencia: rama `feat/externals-integrations`, commit `2bde9b7`.
 - El acceso a la nube se renueva al expirar; el original fallaba tras una hora.
 - Un archivo remoto ilegible produce error; el original lo trataba como vacio.
 
+- Ajustar stock exige motivo y no baja de cero; el original recortaba en silencio.
+- El stock de un producto existente solo cambia con ventas, anulaciones o ajustes.
+
+## Agregado sobre el original
+
+- Anulacion de ventas (solo administradores) con devolucion de stock.
+- Movimientos de inventario con autor y referencia.
+- Vendedor por venta, utilidad estimada y ventas por vendedor.
+- Periodos y grafico en informes y dashboard.
+- Punto de venta con catalogo, categorias, recibido, cambio y notas.
+- Tema claro y oscuro, avisos no bloqueantes, columnas ordenables.
+- Exportacion a CSV.
+
 ## Verificacion
 
 | Comprobado | Como |
 |---|---|
 | JSON local, respaldo y migracion | contrato comun de `Store` |
 | Google Drive y Dropbox | servidor falso, nunca contra cuentas reales |
+| PostgreSQL 18.4 real | contrato de `Store`, concurrencia, migracion de esquema y flujo de negocio |
 | Interfaz | `egui_kittest` y capturas renderizadas |
 
 | Sin comprobar | Motivo |
 |---|---|
-| MySQL, PostgreSQL y MongoDB reales | Docker sin virtualizacion en el equipo |
+| MySQL y MongoDB reales | Docker sin virtualizacion en el equipo |
 | Ejecutable en Windows | Smart App Control bloqueo el binario sin firma |
 | Linux y macOS | solo definido en CI, aun sin ejecutar |
 | Impresion fisica y llavero del sistema | requieren sesion de usuario |

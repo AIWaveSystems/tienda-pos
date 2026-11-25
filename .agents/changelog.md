@@ -1,5 +1,13 @@
 # Cambios
 
+## Sin publicar
+
+- Anulacion de ventas, movimientos de inventario y vendedor.
+- Migracion automatica de columnas en SQL.
+- Informes por periodo, utilidad estimada, grafico y CSV.
+- Punto de venta, dashboard y temas redisenados.
+- PostgreSQL verificado contra un servidor real.
+
 ## 0.1.0
 
 - Dominio, configuracion, almacenamiento, servicios e interfaz portados a Rust.
