@@ -7,6 +7,7 @@ pub enum Route {
     Dashboard,
     Inventory,
     Categories,
+    Movements,
     Clients,
     NewSale,
     History,
@@ -16,10 +17,11 @@ pub enum Route {
 }
 
 impl Route {
-    pub const ALL: [Self; 9] = [
+    pub const ALL: [Self; 10] = [
         Self::Dashboard,
         Self::Inventory,
         Self::Categories,
+        Self::Movements,
         Self::Clients,
         Self::NewSale,
         Self::History,
@@ -31,6 +33,7 @@ impl Route {
     pub fn label(self) -> &'static str {
         match self {
             Self::Categories => "Categorias",
+            Self::Movements => "Movimientos",
             other => other.permission().label(),
         }
     }
@@ -38,7 +41,7 @@ impl Route {
     pub fn permission(self) -> Permission {
         match self {
             Self::Dashboard => Permission::Dashboard,
-            Self::Inventory | Self::Categories => Permission::Inventario,
+            Self::Inventory | Self::Categories | Self::Movements => Permission::Inventario,
             Self::Clients => Permission::Clientes,
             Self::NewSale => Permission::Ventas,
             Self::History => Permission::Historial,
