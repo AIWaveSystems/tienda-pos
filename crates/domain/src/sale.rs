@@ -2,7 +2,7 @@ use chrono::NaiveDateTime;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
-use crate::{new_id, now, Entity, PaymentMethod};
+use crate::{clock, new_id, now, Entity, PaymentMethod};
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
@@ -52,6 +52,9 @@ pub struct Sale {
     pub total: Decimal,
     pub payment_method: PaymentMethod,
     pub notes: String,
+    pub seller: String,
+    #[serde(with = "clock::optional")]
+    pub voided_at: Option<NaiveDateTime>,
     pub created_at: NaiveDateTime,
 }
 
@@ -68,6 +71,8 @@ impl Default for Sale {
             total: Decimal::ZERO,
             payment_method: PaymentMethod::default(),
             notes: String::new(),
+            seller: String::new(),
+            voided_at: None,
             created_at: now(),
         }
     }
@@ -78,6 +83,10 @@ impl Sale {
         self.subtotal = self.items.iter_mut().map(SaleItem::calculate).sum();
         self.tax = (self.subtotal * tax_rate).round_dp(4);
         self.total = self.subtotal + self.tax - self.discount;
+    }
+
+    pub fn is_voided(&self) -> bool {
+        self.voided_at.is_some()
     }
 
     pub fn short_id(&self) -> &str {
