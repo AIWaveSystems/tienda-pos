@@ -46,7 +46,7 @@ impl SettingsView {
             tab: Tab::Business,
             draft: Draft::new(&env.config),
             storage: StoragePanel::new(env),
-            status: (String::new(), theme::SUCCESS),
+            status: (String::new(), theme::palette().success),
             restoring: None,
             migrating: None,
             copy: None,
@@ -106,7 +106,7 @@ impl SettingsView {
         let config = match self.collect(env) {
             Ok(config) => config,
             Err(message) => {
-                self.status = (message, theme::DANGER);
+                self.status = (message, theme::palette().danger);
                 return;
             }
         };
@@ -116,7 +116,7 @@ impl SettingsView {
             return;
         }
         if let Err(message) = self.storage.ready() {
-            self.status = (message, theme::DANGER);
+            self.status = (message, theme::palette().danger);
             return;
         }
         let text = format!(
@@ -142,7 +142,7 @@ impl SettingsView {
             .store_password(env)
             .and_then(|()| env.store.save(&config));
         if let Err(failure) = outcome {
-            self.status = (failure.to_string(), theme::DANGER);
+            self.status = (failure.to_string(), theme::palette().danger);
             return;
         }
         env.config = config;
@@ -150,7 +150,7 @@ impl SettingsView {
         if migrated {
             message.push_str(". Reinicie la aplicacion para usar el nuevo almacenamiento.");
         }
-        self.status = (message, theme::SUCCESS);
+        self.status = (message, theme::palette().success);
     }
 
     fn dialogs(&mut self, ctx: &Context, env: &mut Env) {
@@ -161,7 +161,10 @@ impl SettingsView {
                 if let Some(config) = env.check(outcome) {
                     env.config = config;
                     self.reload(env);
-                    self.status = ("Valores por defecto restaurados".to_owned(), theme::SUCCESS);
+                    self.status = (
+                        "Valores por defecto restaurados".to_owned(),
+                        theme::palette().success,
+                    );
                 }
             }
         }
@@ -176,7 +179,7 @@ impl SettingsView {
             return;
         };
         if accepted {
-            self.status = ("Copiando datos...".to_owned(), theme::MUTED);
+            self.status = ("Copiando datos...".to_owned(), theme::palette().muted);
             self.copy = Some(self.storage.migrate(ctx, env, config));
         } else {
             config.storage = env.config.storage.clone();
@@ -190,7 +193,7 @@ impl SettingsView {
             Some(Err(failure)) => {
                 self.status = (
                     format!("No se pudo migrar los datos: {failure}"),
-                    theme::DANGER,
+                    theme::palette().danger,
                 );
             }
             None => {}
@@ -215,6 +218,7 @@ impl View for SettingsView {
             .show(ui, |ui| self.content(ui, env));
         self.footer(ui, env);
         self.dialogs(&ui.ctx().clone(), env);
+        theme::apply(ui.ctx(), &env.config.ui.theme);
     }
 }
 
@@ -279,6 +283,8 @@ fn sales(ui: &mut Ui, draft: &mut Draft) {
 }
 
 fn interface(ui: &mut Ui, draft: &mut Draft) {
+    title::heading(ui, "Apariencia");
+    select::labelled(ui, "Tema", &Draft::themes(), &mut draft.theme);
     title::heading(ui, "Ventana principal");
     title::hint(
         ui,

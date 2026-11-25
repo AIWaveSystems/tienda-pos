@@ -218,6 +218,6 @@ fn cells(sale: &Sale) -> Row {
         sale.seller.clone(),
         if voided { "Anulada" } else { "Activa" }.to_owned(),
     ]);
-    row.color = voided.then_some(theme::SUBTLE);
+    row.color = voided.then_some(theme::palette().subtle);
     row
 }

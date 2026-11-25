@@ -96,9 +96,9 @@ impl View for MovementsView {
 
 fn cells(item: &StockMovement) -> Row {
     let color = if item.quantity < 0 {
-        theme::DANGER
+        theme::palette().danger
     } else {
-        theme::SUCCESS
+        theme::palette().success
     };
     Row {
         cells: vec![

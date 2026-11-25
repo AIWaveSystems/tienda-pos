@@ -121,9 +121,9 @@ impl ProductForm {
             return;
         }
         let color = if price >= cost {
-            theme::SUCCESS
+            theme::palette().success
         } else {
-            theme::DANGER
+            theme::palette().danger
         };
         let text = format!(
             "Margen: {:.1}%   Utilidad por unidad: {}",

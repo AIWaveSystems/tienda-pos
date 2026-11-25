@@ -8,6 +8,7 @@ use crate::format;
 pub struct Document {
     pub name: String,
     pub html: String,
+    pub csv: Option<String>,
 }
 
 impl Document {
@@ -25,6 +26,7 @@ impl Document {
         Self {
             name: name.to_owned(),
             html,
+            csv: None,
         }
     }
 

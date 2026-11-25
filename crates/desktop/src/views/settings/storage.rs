@@ -44,7 +44,7 @@ impl StoragePanel {
             tested: None,
             testing: None,
             linking: None,
-            status: (String::new(), theme::MUTED),
+            status: (String::new(), theme::palette().muted),
         };
         panel.reset(env);
         panel
@@ -88,7 +88,7 @@ impl StoragePanel {
         if self.backend().is_cloud() {
             match env.credentials.load(self.backend()) {
                 Ok(credentials) => self.account = connected(&credentials),
-                Err(failure) => self.status = (failure.to_string(), theme::DANGER),
+                Err(failure) => self.status = (failure.to_string(), theme::palette().danger),
             }
         }
     }
@@ -226,7 +226,7 @@ impl StoragePanel {
         ui.label(
             RichText::new("Cambiar el motor de almacenamiento requiere reiniciar la aplicacion.")
                 .small()
-                .color(theme::WARNING),
+                .color(theme::palette().warning),
         );
     }
 
@@ -258,11 +258,11 @@ impl StoragePanel {
     fn test(&mut self, ctx: &Context, env: &Env) {
         let mut config = self.config.clone();
         if let Err(message) = self.apply(&mut config) {
-            self.status = (message, theme::DANGER);
+            self.status = (message, theme::palette().danger);
             return;
         }
         let credentials = self.credentials(env);
-        self.status = ("Probando conexion...".to_owned(), theme::MUTED);
+        self.status = ("Probando conexion...".to_owned(), theme::palette().muted);
         let task = Task::spawn(ctx, move || -> Result<(), StorageError> {
             let store = StoreFactory::connect(&config, &credentials?)?;
             store.ping()?;
@@ -279,16 +279,16 @@ impl StoragePanel {
                  si mas de una caja usa el mismo almacenamiento al mismo tiempo.",
             )
             .small()
-            .color(theme::WARNING),
+            .color(theme::palette().warning),
         );
         let backend = self.backend();
         if !self.account.is_empty() {
             let text = format!("Conectado como: {}", self.account);
-            title::status(ui, &text, theme::SUCCESS);
+            title::status(ui, &text, theme::palette().success);
             if button::plain(ui, "Desconectar") {
                 match env.credentials.clear(backend) {
                     Ok(()) => self.reset(env),
-                    Err(failure) => self.status = (failure.to_string(), theme::DANGER),
+                    Err(failure) => self.status = (failure.to_string(), theme::palette().danger),
                 }
             }
             return;
@@ -301,7 +301,7 @@ impl StoragePanel {
         if clicked {
             self.status = (
                 "Abriendo el navegador para autorizar el acceso...".to_owned(),
-                theme::MUTED,
+                theme::palette().muted,
             );
             let credentials = env.credentials.clone();
             self.linking = Some(Task::spawn(
@@ -331,11 +331,14 @@ impl StoragePanel {
         match Task::poll(&mut slot) {
             Some(Ok(())) => {
                 self.tested = Some((self.backend(), fields));
-                self.status = ("Conexion exitosa".to_owned(), theme::SUCCESS);
+                self.status = ("Conexion exitosa".to_owned(), theme::palette().success);
             }
             Some(Err(failure)) => {
                 self.tested = None;
-                self.status = (format!("Error de conexion: {failure}"), theme::DANGER);
+                self.status = (
+                    format!("Error de conexion: {failure}"),
+                    theme::palette().danger,
+                );
             }
             None => self.testing = slot.map(|task| (fields, task)),
         }
@@ -346,10 +349,16 @@ impl StoragePanel {
         match Task::poll(&mut self.linking) {
             Some(Ok(_)) => {
                 self.reset(env);
-                self.status = ("Cuenta conectada correctamente".to_owned(), theme::SUCCESS);
+                self.status = (
+                    "Cuenta conectada correctamente".to_owned(),
+                    theme::palette().success,
+                );
             }
             Some(Err(failure)) => {
-                self.status = (format!("No se pudo conectar: {failure}"), theme::DANGER);
+                self.status = (
+                    format!("No se pudo conectar: {failure}"),
+                    theme::palette().danger,
+                );
             }
             None => {}
         }

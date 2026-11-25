@@ -155,11 +155,11 @@ fn found(user: &User, query: &str) -> bool {
 
 fn cells(user: &User, current: &str) -> Row {
     let (state, color) = if user.id == current {
-        ("Sesion actual", Some(theme::SUCCESS))
+        ("Sesion actual", Some(theme::palette().success))
     } else if user.active {
         ("Activo", None)
     } else {
-        ("Inactivo", Some(theme::SUBTLE))
+        ("Inactivo", Some(theme::palette().subtle))
     };
     Row {
         cells: vec![

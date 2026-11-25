@@ -43,7 +43,7 @@ impl Desk {
             .with_size([1100.0, 760.0])
             .build(move |ctx| {
                 app.get_or_insert_with(|| {
-                    theme::apply(ctx);
+                    theme::apply(ctx, "dark");
                     App::new(ctx, config.clone())
                 })
                 .tick(ctx);
@@ -129,9 +129,7 @@ impl Desk {
             self.write_password(position, text);
         }
         self.click("Guardar contrasena");
-        self.wait_for("Contrasena actualizada");
-        self.click("Aceptar");
-        self.wait_for("Ingresos");
+        self.wait_for("Ingresos de hoy");
     }
 }
 
@@ -158,7 +156,7 @@ fn every_view_opens() {
         (Route::Reports, "Estado del Inventario"),
         (Route::Users, "Sesion actual"),
         (Route::Settings, "Datos del negocio"),
-        (Route::Dashboard, "Ingresos"),
+        (Route::Dashboard, "Ingresos de hoy"),
     ] {
         desk.open(route.label());
         desk.wait_for(content);
@@ -180,7 +178,6 @@ fn a_sale_can_be_made_with_the_keyboard() {
     desk.wait_for("¿Desea continuar?");
     desk.click("Si");
     desk.wait_for("registrada exitosamente");
-    desk.click("Aceptar");
     desk.open(Route::History.label());
     desk.wait_for("1 venta(s)");
     desk.press(Modifiers::NONE, Key::ArrowDown);

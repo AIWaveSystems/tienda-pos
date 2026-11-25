@@ -18,14 +18,14 @@ pub fn show(ui: &mut Ui, env: &Env, current: Option<Route>) -> SidebarEvent {
             RichText::new(env.config.business_name())
                 .size(19.0)
                 .strong()
-                .color(theme::ACCENT),
+                .color(theme::palette().accent),
         );
         if let Some(user) = env.services.auth.current() {
             ui.label(user.full_name);
             ui.label(
                 RichText::new(user.role.label())
                     .small()
-                    .color(theme::SUBTLE),
+                    .color(theme::palette().subtle),
             );
         }
     });
@@ -34,16 +34,21 @@ pub fn show(ui: &mut Ui, env: &Env, current: Option<Route>) -> SidebarEvent {
     ui.spacing_mut().item_spacing.y = 0.0;
     for route in Route::available(env) {
         let selected = current == Some(route);
-        let color = if selected { theme::ACCENT } else { theme::FG };
-        if entry(ui, route.label(), color, selected) {
+        let color = if selected {
+            theme::palette().accent
+        } else {
+            theme::palette().fg
+        };
+        let label = format!("{}  {}", route.icon(), route.label());
+        if entry(ui, &label, color, selected) {
             event = SidebarEvent::Open(route);
         }
     }
     ui.with_layout(Layout::bottom_up(Align::Min), |ui| {
-        if entry(ui, "Cerrar sesion", theme::DANGER, false) {
+        if entry(ui, "Cerrar sesion", theme::palette().danger, false) {
             event = SidebarEvent::Logout;
         }
-        if entry(ui, "Mi Perfil", theme::MUTED, false) {
+        if entry(ui, "Mi Perfil", theme::palette().muted, false) {
             event = SidebarEvent::Profile;
         }
         ui.separator();
@@ -53,9 +58,9 @@ pub fn show(ui: &mut Ui, env: &Env, current: Option<Route>) -> SidebarEvent {
 
 fn entry(ui: &mut Ui, text: &str, color: Color32, selected: bool) -> bool {
     let fill = if selected {
-        theme::SURFACE
+        theme::palette().surface
     } else {
-        theme::SIDEBAR
+        theme::palette().sidebar
     };
     let size = Vec2::new(ui.available_width(), 38.0);
     let button = Button::new(RichText::new(format!("   {text}")).color(color))

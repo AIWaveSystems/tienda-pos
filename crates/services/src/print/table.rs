@@ -1,5 +1,6 @@
 use pos_config::{AppConfig, PrinterFormat};
 
+use super::csv::csv;
 use super::document::{cards, escape, subtitle, Document};
 
 #[derive(Clone, Copy, Debug)]
@@ -50,7 +51,9 @@ pub fn table(listing: &Listing, config: &AppConfig) -> Document {
         grid(&listing.columns, &listing.rows),
         listing.rows.len()
     );
-    Document::new(&listing.title, &body, config, PrinterFormat::A4)
+    let mut document = Document::new(&listing.title, &body, config, PrinterFormat::A4);
+    document.csv = Some(csv(listing));
+    document
 }
 
 pub fn grid(columns: &[Column], rows: &[Vec<String>]) -> String {

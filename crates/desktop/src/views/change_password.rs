@@ -32,7 +32,7 @@ impl ChangePasswordView {
                 RichText::new("Cambio de contrasena requerido")
                     .size(20.0)
                     .strong()
-                    .color(theme::WARNING),
+                    .color(theme::palette().warning),
             );
             title::hint(
                 ui,
@@ -50,7 +50,7 @@ impl ChangePasswordView {
                 if button::wide_accent(ui, "Guardar contrasena") || submitted {
                     done = self.submit(env);
                 }
-                title::status(ui, &self.error, theme::DANGER);
+                title::status(ui, &self.error, theme::palette().danger);
             });
         });
         done
@@ -73,10 +73,7 @@ impl ChangePasswordView {
             self.error = failure.to_string();
             return false;
         }
-        env.info(
-            "Contrasena actualizada",
-            "Su contrasena se guardo correctamente.",
-        );
+        env.toast("Su contrasena se guardo correctamente.");
         true
     }
 }

@@ -38,6 +38,21 @@ impl Route {
         }
     }
 
+    pub fn icon(self) -> &'static str {
+        match self {
+            Self::Dashboard => "🏠",
+            Self::Inventory => "📦",
+            Self::Categories => "🏷",
+            Self::Movements => "🔄",
+            Self::Clients => "👥",
+            Self::NewSale => "💳",
+            Self::History => "📋",
+            Self::Reports => "📊",
+            Self::Users => "👤",
+            Self::Settings => "⚙",
+        }
+    }
+
     pub fn permission(self) -> Permission {
         match self {
             Self::Dashboard => Permission::Dashboard,

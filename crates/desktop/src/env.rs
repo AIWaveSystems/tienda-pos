@@ -7,6 +7,7 @@ use pos_services::Services;
 
 use crate::components::notice::Notice;
 use crate::components::print_dialog::PrintDialog;
+use crate::components::toast::Toast;
 
 pub struct Env {
     pub services: Arc<Services>,
@@ -14,6 +15,7 @@ pub struct Env {
     pub store: ConfigStore,
     pub credentials: CredentialStore,
     pub notices: Vec<Notice>,
+    pub toasts: Vec<Toast>,
     pub printing: Option<PrintDialog>,
 }
 
@@ -37,8 +39,8 @@ impl Env {
             .is_some_and(|user| user.is_admin())
     }
 
-    pub fn info(&mut self, title: &str, text: impl Into<String>) {
-        self.notices.push(Notice::info(title, text));
+    pub fn toast(&mut self, text: impl Into<String>) {
+        self.toasts.push(Toast::new(text));
     }
 
     pub fn warn(&mut self, title: &str, text: impl Into<String>) {

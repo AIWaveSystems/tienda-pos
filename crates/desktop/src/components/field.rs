@@ -1,4 +1,4 @@
-use eframe::egui::{Margin, Response, RichText, TextEdit, Ui};
+use eframe::egui::{Id, Margin, Response, RichText, TextEdit, Ui};
 
 use crate::theme;
 
@@ -20,13 +20,28 @@ pub fn input(ui: &mut Ui, value: &mut String, width: f32) -> Response {
 pub fn search(ui: &mut Ui, value: &mut String, hint: &str, width: f32) -> Response {
     ui.add(
         edit(value)
-            .hint_text(RichText::new(hint).color(theme::SUBTLE))
+            .hint_text(RichText::new(hint).color(theme::palette().subtle))
+            .desired_width(width),
+    )
+}
+
+pub fn named_search(
+    ui: &mut Ui,
+    name: &str,
+    value: &mut String,
+    hint: &str,
+    width: f32,
+) -> Response {
+    ui.add(
+        edit(value)
+            .id(Id::new(("search", name)))
+            .hint_text(RichText::new(hint).color(theme::palette().subtle))
             .desired_width(width),
     )
 }
 
 pub fn caption(ui: &mut Ui, label: &str) -> Response {
-    ui.label(RichText::new(label).color(theme::MUTED))
+    ui.label(RichText::new(label).color(theme::palette().muted))
 }
 
 fn edit(value: &mut String) -> TextEdit<'_> {

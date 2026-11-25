@@ -41,10 +41,7 @@ impl ProfileDialog {
             DialogEvent::Cancel => false,
             DialogEvent::Accept => match self.save(env) {
                 Ok(()) => {
-                    env.info(
-                        "Perfil actualizado",
-                        "Sus datos se guardaron correctamente.",
-                    );
+                    env.toast("Sus datos se guardaron correctamente.");
                     false
                 }
                 Err(failure) => {

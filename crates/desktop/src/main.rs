@@ -18,6 +18,7 @@ use pos_config::{ConfigStore, Paths};
 fn main() -> eframe::Result {
     let store = ConfigStore::new(Paths::detect());
     let ui = store.load().unwrap_or_default().ui;
+    let theme = ui.theme.clone();
     let mut viewport = ViewportBuilder::default()
         .with_title("Ventas POS - Sistema de Punto de Venta")
         .with_inner_size([ui.window_width as f32, ui.window_height as f32])
@@ -33,8 +34,8 @@ fn main() -> eframe::Result {
     eframe::run_native(
         "ventas-pos-rust",
         options,
-        Box::new(|creation| {
-            theme::apply(&creation.egui_ctx);
+        Box::new(move |creation| {
+            theme::apply(&creation.egui_ctx, &theme);
             Ok(Box::new(App::new(&creation.egui_ctx, store)))
         }),
     )

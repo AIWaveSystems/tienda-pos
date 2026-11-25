@@ -1,6 +1,7 @@
 use eframe::egui::{Align, Color32, Layout, RichText, Sense, Ui};
 use egui_extras::{Column as Width, TableBuilder};
 
+use super::sorting::Sorting;
 use crate::theme;
 
 #[derive(Clone, Copy)]
@@ -42,6 +43,7 @@ impl Row {
 pub struct TableEvent {
     pub clicked: Option<usize>,
     pub activated: Option<usize>,
+    pub header: Option<usize>,
 }
 
 pub fn table(
@@ -52,56 +54,106 @@ pub fn table(
     selected: Option<usize>,
     height: f32,
 ) -> TableEvent {
-    let mut event = TableEvent::default();
-    let mut builder = TableBuilder::new(ui)
-        .id_salt(id)
-        .striped(true)
-        .resizable(true)
-        .sense(Sense::click())
-        .cell_layout(Layout::left_to_right(Align::Center))
-        .auto_shrink([false, false])
-        .min_scrolled_height(0.0)
-        .max_scroll_height(height);
-    for (index, column) in columns.iter().enumerate() {
-        builder = builder.column(if index == 0 {
-            Width::remainder().at_least(column.width).clip(true)
-        } else {
-            Width::initial(column.width).at_least(40.0).clip(true)
-        });
+    Grid {
+        id,
+        columns,
+        rows,
+        selected,
+        sorting: None,
     }
-    builder
-        .header(30.0, |mut header| {
-            for column in columns {
-                header.col(|ui| {
-                    cell(
-                        ui,
-                        column.right,
-                        RichText::new(column.title).small().strong(),
-                    );
-                });
-            }
-        })
-        .body(|body| {
-            body.rows(30.0, rows.len(), |mut line| {
-                let index = line.index();
-                let row = &rows[index];
-                line.set_selected(selected == Some(index));
-                for (column, value) in columns.iter().zip(&row.cells) {
-                    line.col(|ui| {
-                        let color = row.color.unwrap_or(theme::FG);
-                        cell(ui, column.right, RichText::new(value).color(color));
-                    });
-                }
-                let response = line.response();
-                if response.clicked() {
-                    event.clicked = Some(index);
-                }
-                if response.double_clicked() {
-                    event.activated = Some(index);
-                }
+    .show(ui, height)
+}
+
+pub struct Grid<'a> {
+    pub id: &'a str,
+    pub columns: &'a [Column],
+    pub rows: &'a [Row],
+    pub selected: Option<usize>,
+    pub sorting: Option<Sorting>,
+}
+
+impl Grid<'_> {
+    pub fn show(&self, ui: &mut Ui, height: f32) -> TableEvent {
+        ui.push_id(self.id, |ui| self.build(ui, height)).inner
+    }
+
+    fn scale(&self, available: f32) -> f32 {
+        let gaps = 10.0 * self.columns.len() as f32;
+        let wanted: f32 = self.columns.iter().map(|column| column.width).sum();
+        ((available - gaps) / wanted).min(1.0)
+    }
+
+    fn build(&self, ui: &mut Ui, height: f32) -> TableEvent {
+        let scale = self.scale(ui.available_width());
+        let Self {
+            id,
+            columns,
+            rows,
+            selected,
+            sorting,
+        } = self;
+        let mut event = TableEvent::default();
+        let mut builder = TableBuilder::new(ui)
+            .id_salt(id)
+            .striped(true)
+            .resizable(true)
+            .sense(Sense::click())
+            .cell_layout(Layout::left_to_right(Align::Center))
+            .auto_shrink([false, false])
+            .min_scrolled_height(0.0)
+            .max_scroll_height(height);
+        for (index, column) in columns.iter().enumerate() {
+            builder = builder.column(if index == 0 {
+                Width::remainder().at_least(column.width * scale).clip(true)
+            } else {
+                Width::initial(column.width * scale)
+                    .at_least(40.0)
+                    .clip(true)
             });
-        });
-    event
+        }
+        builder
+            .header(30.0, |mut header| {
+                for (index, column) in columns.iter().enumerate() {
+                    let (_, response) = header.col(|ui| {
+                        cell(
+                            ui,
+                            column.right,
+                            RichText::new(format!(
+                                "{}{}",
+                                column.title,
+                                Sorting::mark(*sorting, index)
+                            ))
+                            .small()
+                            .strong(),
+                        );
+                    });
+                    if response.clicked() {
+                        event.header = Some(index);
+                    }
+                }
+            })
+            .body(|body| {
+                body.rows(30.0, rows.len(), |mut line| {
+                    let index = line.index();
+                    let row = &rows[index];
+                    line.set_selected(*selected == Some(index));
+                    for (column, value) in columns.iter().zip(&row.cells) {
+                        line.col(|ui| {
+                            let color = row.color.unwrap_or(theme::palette().fg);
+                            cell(ui, column.right, RichText::new(value).color(color));
+                        });
+                    }
+                    let response = line.response();
+                    if response.clicked() {
+                        event.clicked = Some(index);
+                    }
+                    if response.double_clicked() {
+                        event.activated = Some(index);
+                    }
+                });
+            });
+        event
+    }
 }
 
 fn cell(ui: &mut Ui, right: bool, text: RichText) {
