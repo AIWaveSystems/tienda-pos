@@ -7,6 +7,7 @@
 - Informes por periodo, utilidad estimada, grafico y CSV.
 - Punto de venta, dashboard y temas redisenados.
 - PostgreSQL verificado contra un servidor real.
+- Ver u ocultar el valor en todos los campos de contrasena.
 
 ## 0.1.0
 
