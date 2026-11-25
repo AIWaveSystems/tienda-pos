@@ -2,7 +2,9 @@ use std::sync::Arc;
 
 use pos_config::{AppConfig, PrinterFormat};
 use pos_domain::{Category, Client, Permission, Product, Role, Sale, SaleItem};
-use pos_services::{client, format, inventory, print, sales, SaleFilter, Services, UserDraft};
+use pos_services::{
+    client, format, inventory, print, sales, Period, SaleFilter, Services, UserDraft,
+};
 use pos_storage::DocumentStore;
 use rust_decimal::Decimal;
 
@@ -144,12 +146,14 @@ fn sale_discounts_stock() {
         .register(Sale::default(), rate, false)
         .is_err());
     assert_eq!(services.sales.list().unwrap().len(), 1);
-    let overview = services.reports.overview(10, 14).unwrap();
+    let overview = services.reports.overview(10, Period::Fortnight).unwrap();
     assert_eq!(overview.sales.count, 1);
     assert_eq!(overview.top[0].quantity, 3);
     assert_eq!(overview.daily.len(), 14);
     assert_eq!(overview.daily[13].total, Decimal::from(357));
     assert_eq!(overview.inventory.value, Decimal::from(120));
+    assert_eq!(overview.profit, Decimal::from(120));
+    assert_eq!(overview.sellers[0].name, "Sin vendedor");
 }
 
 #[test]
@@ -225,7 +229,15 @@ fn voided_sales_return_stock_and_leave_reports() {
         services.inventory.find(&bread.id).unwrap().unwrap().stock,
         5
     );
-    assert_eq!(services.reports.overview(10, 14).unwrap().sales.count, 0);
+    assert_eq!(
+        services
+            .reports
+            .overview(10, Period::Fortnight)
+            .unwrap()
+            .sales
+            .count,
+        0
+    );
     let history = services.inventory.movements().unwrap();
     assert_eq!(history.len(), 2);
     assert!(history

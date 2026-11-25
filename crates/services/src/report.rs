@@ -6,7 +6,7 @@ use pos_domain::{now, Product, Sale};
 use pos_storage::Store;
 use rust_decimal::Decimal;
 
-use crate::Result;
+use crate::{Period, Result};
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct SalesSummary {
@@ -36,12 +36,21 @@ pub struct DailySales {
     pub total: Decimal,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct SellerSales {
+    pub name: String,
+    pub count: usize,
+    pub total: Decimal,
+}
+
 #[derive(Clone, Debug, Default)]
 pub struct Overview {
     pub sales: SalesSummary,
     pub inventory: InventorySummary,
     pub top: Vec<TopProduct>,
     pub daily: Vec<DailySales>,
+    pub sellers: Vec<SellerSales>,
+    pub profit: Decimal,
 }
 
 pub struct ReportService {
@@ -53,15 +62,19 @@ impl ReportService {
         Self { store }
     }
 
-    pub fn overview(&self, top: usize, days: i64) -> Result<Overview> {
+    pub fn overview(&self, top: usize, period: Period) -> Result<Overview> {
+        let today = now().date();
+        let start = period.start(today);
         let mut sales = self.store.sales().all()?;
-        sales.retain(|sale| !sale.is_voided());
+        sales.retain(|sale| !sale.is_voided() && sale.created_at.date() >= start);
         let products = self.store.products().all()?;
         Ok(Overview {
             sales: summarize(&sales),
+            profit: profit(&sales, &products),
+            sellers: sellers(&sales),
             inventory: inventory(products),
             top: top_products(&sales, top),
-            daily: daily(&sales, days),
+            daily: daily(&sales, period.days(today)),
         })
     }
 
@@ -112,6 +125,46 @@ fn top_products(sales: &[Sale], limit: usize) -> Vec<TopProduct> {
     ranked.sort_by(|a, b| b.revenue.cmp(&a.revenue).then(a.name.cmp(&b.name)));
     ranked.truncate(limit);
     ranked
+}
+
+fn sellers(sales: &[Sale]) -> Vec<SellerSales> {
+    let mut totals: HashMap<&str, SellerSales> = HashMap::new();
+    for sale in sales {
+        let name = match sale.seller.as_str() {
+            "" => "Sin vendedor",
+            name => name,
+        };
+        let entry = totals.entry(name).or_insert_with(|| SellerSales {
+            name: name.to_owned(),
+            count: 0,
+            total: Decimal::ZERO,
+        });
+        entry.count += 1;
+        entry.total += sale.total;
+    }
+    let mut ranked: Vec<SellerSales> = totals.into_values().collect();
+    ranked.sort_by(|a, b| b.total.cmp(&a.total).then(a.name.cmp(&b.name)));
+    ranked
+}
+
+fn profit(sales: &[Sale], products: &[Product]) -> Decimal {
+    let costs: HashMap<&str, Decimal> = products
+        .iter()
+        .map(|product| (product.id.as_str(), product.cost))
+        .collect();
+    sales
+        .iter()
+        .map(|sale| {
+            let cost: Decimal = sale
+                .items
+                .iter()
+                .filter_map(|item| {
+                    Some(Decimal::from(item.quantity) * costs.get(item.product_id.as_str())?)
+                })
+                .sum();
+            sale.subtotal - sale.discount - cost
+        })
+        .sum()
 }
 
 fn daily(sales: &[Sale], days: i64) -> Vec<DailySales> {

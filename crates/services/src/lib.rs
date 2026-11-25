@@ -14,5 +14,7 @@ pub use sales::{SaleFilter, SalesService};
 pub mod report;
 pub use report::ReportService;
 mod context;
+mod period;
+pub use period::Period;
 pub mod print;
 pub use context::Services;
