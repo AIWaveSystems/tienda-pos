@@ -29,6 +29,7 @@ const COLUMNS: [Column; 6] = [
 
 pub struct InventoryView {
     list: List<Product>,
+    only_low: bool,
     categories: Vec<Category>,
     loading: Option<Task<Vec<Category>>>,
     form: Option<ProductForm>,
@@ -40,6 +41,7 @@ impl InventoryView {
     pub fn new(ctx: &Context, env: &Env) -> Self {
         let mut view = Self {
             list: List::new("products"),
+            only_low: false,
             categories: Vec::new(),
             loading: None,
             form: None,
@@ -89,7 +91,9 @@ impl InventoryView {
 
     fn print(&self, env: &mut Env) {
         let names = self.names();
-        let found = inventory::search(&self.list.items, &self.list.query, |id| name(&names, id));
+        let mut found =
+            inventory::search(&self.list.items, &self.list.query, |id| name(&names, id));
+        found.retain(|item| !self.only_low || item.low_stock());
         let value = found.iter().map(|item| item.inventory_value()).sum();
         let low = found.iter().filter(|item| item.low_stock()).count();
         let listing = print::Listing {
@@ -155,10 +159,16 @@ impl View for InventoryView {
                 self.form = Some(ProductForm::create(minimum, &self.categories));
             }
         });
-        self.list.search(ui, "Buscar", f32::INFINITY);
+        ui.horizontal(|ui| {
+            if ui.checkbox(&mut self.only_low, "Solo stock bajo").changed() {
+                self.list.reset_page();
+            }
+            self.list.search(ui, "Buscar", f32::INFINITY);
+        });
         let names = self.names();
         let items = std::mem::take(&mut self.list.items);
-        let matches = inventory::search(&items, &self.list.query, |id| name(&names, id));
+        let mut matches = inventory::search(&items, &self.list.query, |id| name(&names, id));
+        matches.retain(|item| !self.only_low || item.low_stock());
         let row = |item: &Product| cells(item, &names);
         let mut action = self.list.show(ui, &COLUMNS, &matches, row, 90.0);
         let total = matches.len();
