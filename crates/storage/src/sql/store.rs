@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use pos_config::model::SqlSettings;
 use pos_config::BackendKind;
-use pos_domain::{Category, Client, Product, Sale, StockMovement, User};
+use pos_domain::{CashEntry, Category, Client, Product, Sale, StockMovement, User};
 
 use super::driver::{SqlDriver, Statement};
 use super::mysql::MySqlDriver;
@@ -51,6 +51,7 @@ pub struct SqlStore {
     products: SqlRepository<Product>,
     sales: SqlRepository<Sale>,
     movements: SqlRepository<StockMovement>,
+    cash: SqlRepository<CashEntry>,
 }
 
 impl SqlStore {
@@ -79,6 +80,7 @@ impl SqlStore {
             clients: SqlRepository::new(driver.clone()),
             products: SqlRepository::new(driver.clone()),
             sales: SqlRepository::new(driver.clone()),
+            cash: SqlRepository::new(driver.clone()),
             movements: SqlRepository::new(driver.clone()),
             driver,
         })
@@ -112,6 +114,10 @@ impl Store for SqlStore {
 
     fn movements(&self) -> &dyn Repository<StockMovement> {
         &self.movements
+    }
+
+    fn cash(&self) -> &dyn Repository<CashEntry> {
+        &self.cash
     }
 
     fn apply_stock(&self, operation: &StockOperation) -> Result<()> {

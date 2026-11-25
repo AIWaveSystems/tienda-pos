@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use pos_domain::{Category, Client, Product, Sale, StockMovement, User};
+use pos_domain::{CashEntry, Category, Client, Product, Sale, StockMovement, User};
 
 use super::driver::{SqlDriver, Statement};
 use super::schema::{SqlRecord, Table};
@@ -13,6 +13,7 @@ pub fn migrate(driver: &dyn SqlDriver) -> Result<()> {
     record::<Client>(driver)?;
     record::<Product>(driver)?;
     record::<Sale>(driver)?;
+    record::<CashEntry>(driver)?;
     record::<StockMovement>(driver)
 }
 
