@@ -1,8 +1,9 @@
-use eframe::egui::{Id, Key, Ui};
+use eframe::egui::{Key, Ui};
 use pos_domain::Entity;
 
 use super::paginator::Paginator;
-use super::table::{table, Column, Row};
+use super::sorting::Sorting;
+use super::table::{Column, Grid, Row};
 use super::{field, loading};
 use crate::env::Env;
 use crate::input;
@@ -24,6 +25,7 @@ pub struct List<T> {
     selected: Option<String>,
     load: Option<Task<Vec<T>>>,
     focus: bool,
+    sorting: Option<Sorting>,
 }
 
 impl<T: Entity> List<T> {
@@ -36,6 +38,7 @@ impl<T: Entity> List<T> {
             selected: None,
             load: None,
             focus: true,
+            sorting: None,
         }
     }
 
@@ -69,11 +72,7 @@ impl<T: Entity> List<T> {
     }
 
     pub fn search(&mut self, ui: &mut Ui, hint: &str, width: f32) {
-        let response = ui
-            .push_id(Id::new((self.id, "search")), |ui| {
-                field::search(ui, &mut self.query, hint, width)
-            })
-            .inner;
+        let response = field::named_search(ui, self.id, &mut self.query, hint, width);
         if std::mem::take(&mut self.focus) {
             response.request_focus();
         }
@@ -103,22 +102,45 @@ impl<T: Entity> List<T> {
             loading::loading(ui, "Cargando...");
             return None;
         }
-        let range = self.pages.range(matches.len());
-        let visible = &matches[range];
+        let sorted = self.sorted(matches, &row);
+        let range = self.pages.range(sorted.len());
+        let visible = &sorted[range];
         let current = self.position(visible);
         let rows: Vec<Row> = visible.iter().map(|item| row(item)).collect();
         let height = (ui.available_height() - reserved).max(120.0);
         let event = ui
             .allocate_ui([ui.available_width(), height].into(), |ui| {
-                table(ui, self.id, columns, &rows, current, height - 34.0)
+                Grid {
+                    id: self.id,
+                    columns,
+                    rows: &rows,
+                    selected: current,
+                    sorting: self.sorting,
+                }
+                .show(ui, height - 34.0)
             })
             .inner;
+        if let Some(column) = event.header {
+            self.sorting = Sorting::toggle(self.sorting, column);
+        }
         if let Some(index) = event.clicked.or(event.activated) {
             self.selected = Some(visible[index].id().to_owned());
         }
         ui.horizontal(|ui| self.pages.show(ui, matches.len()));
         let action = self.keys(ui, visible);
         event.activated.map(|_| ListAction::Open).or(action)
+    }
+
+    fn sorted<'a>(&self, matches: &[&'a T], row: impl Fn(&T) -> Row) -> Vec<&'a T> {
+        let Some(sorting) = self.sorting else {
+            return matches.to_vec();
+        };
+        let rows: Vec<Row> = matches.iter().map(|item| row(item)).collect();
+        sorting
+            .order(&rows)
+            .into_iter()
+            .map(|index| matches[index])
+            .collect()
     }
 
     fn keys(&mut self, ui: &Ui, visible: &[&T]) -> Option<ListAction> {
