@@ -151,6 +151,7 @@ fn every_view_opens() {
     for (route, content) in [
         (Route::Inventory, "Leche"),
         (Route::Categories, "Sin registros"),
+        (Route::Movements, "Sin registros"),
         (Route::Clients, "Ana"),
         (Route::NewSale, "Confirmar Venta"),
         (Route::History, "Sin registros"),
@@ -179,11 +180,22 @@ fn a_sale_can_be_made_with_the_keyboard() {
     desk.wait_for("¿Desea continuar?");
     desk.click("Si");
     desk.wait_for("registrada exitosamente");
+    desk.click("Aceptar");
+    desk.open(Route::History.label());
+    desk.wait_for("1 venta(s)");
+    desk.press(Modifiers::NONE, Key::ArrowDown);
+    desk.press(Modifiers::NONE, Key::ArrowDown);
+    desk.click("Anular venta");
+    desk.wait_for("volveran al inventario");
+    desk.click("Si");
+    desk.wait_for("Anulada");
+    desk.open(Route::Movements.label());
+    desk.wait_for("2 movimiento(s)");
     let store = DocumentStore::local(desk.folder.path().join("data")).unwrap();
     assert_eq!(store.sales().count().unwrap(), 1);
     let products = store.products().all().unwrap();
     let bread = products.iter().find(|item| item.name == "Pan").unwrap();
-    assert_eq!(bread.stock, 1);
+    assert_eq!(bread.stock, 3);
 }
 
 #[test]

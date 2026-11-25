@@ -357,6 +357,7 @@ impl NewSaleView {
     fn register(&mut self, env: &mut Env) {
         let mut sale = self.preview(env.config.general.tax_rate);
         sale.payment_method = PaymentMethod::ALL[self.method];
+        sale.seller = env.author();
         sale.client_name = WITHOUT_CLIENT.to_owned();
         if let Some(client) = self.chosen_client() {
             sale.client_id = client.id.clone();

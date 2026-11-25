@@ -1,7 +1,8 @@
 use pos_domain::{
-    Category, Client, Entity, PaymentMethod, Permission, Product, Role, Sale, SaleItem, User,
+    now, Category, Client, Entity, MovementKind, PaymentMethod, Permission, Product, Role, Sale,
+    SaleItem, StockMovement, User,
 };
-use pos_storage::{Repository, StorageError, Store};
+use pos_storage::{Repository, SaleChange, StockOperation, StorageError, Store};
 use rust_decimal::Decimal;
 
 fn exercise<T>(repository: &dyn Repository<T>, first: T, second: T, changed: T)
@@ -104,6 +105,7 @@ fn sales_are_atomic(store: &dyn Store) {
         stock,
         ..Product::default()
     };
+    clear_stock(store);
     let (full, scarce) = (product("Lleno", 100), product("Escaso", 5));
     store
         .products()
@@ -118,14 +120,14 @@ fn sales_are_atomic(store: &dyn Store) {
     };
     let stock = |id: &str| store.products().find(id).unwrap().unwrap().stock;
 
-    let rejected = store.register_sale(&order(6), false);
+    let rejected = register(store, &order(6), false);
     assert!(matches!(rejected, Err(StorageError::Stock(name)) if name == "Escaso"));
     assert_eq!(stock(&full.id), 100);
     assert_eq!(store.sales().count().unwrap(), 0);
 
     let accepted = std::thread::scope(|scope| {
         let workers: Vec<_> = (0..10)
-            .map(|_| scope.spawn(|| store.register_sale(&order(1), false).is_ok()))
+            .map(|_| scope.spawn(|| register(store, &order(1), false).is_ok()))
             .collect();
         workers
             .into_iter()
@@ -138,8 +140,57 @@ fn sales_are_atomic(store: &dyn Store) {
     assert_eq!(stock(&full.id), 95);
     assert_eq!(store.sales().count().unwrap(), 5);
 
-    store.register_sale(&order(2), true).unwrap();
+    register(store, &order(2), true).unwrap();
     assert_eq!(stock(&scarce.id), -2);
+
+    let mut voided = store.sales().all().unwrap().remove(0);
+    let before = stock(&full.id);
+    voided.voided_at = Some(now());
+    let movements = StockMovement::of_sale(&voided, MovementKind::Anulacion, "ana");
+    let undo = StockOperation {
+        sale: SaleChange::Void(&voided),
+        movements: &movements,
+        allow_negative: false,
+    };
+    let done = std::thread::scope(|scope| {
+        let workers: Vec<_> = (0..4)
+            .map(|_| scope.spawn(|| store.apply_stock(&undo).is_ok()))
+            .collect();
+        workers
+            .into_iter()
+            .map(|worker| worker.join().unwrap())
+            .filter(|done| *done)
+            .count()
+    });
+    assert_eq!(done, 1);
+    assert!(matches!(
+        store.apply_stock(&undo),
+        Err(StorageError::AlreadyVoided)
+    ));
+    assert_eq!(stock(&full.id), before + 1);
+    let saved = store.sales().find(&voided.id).unwrap().unwrap();
+    assert_eq!(saved, voided);
+    let history = store.movements().all().unwrap();
+    assert_eq!(history.len(), 14);
+    let total: i64 = history
+        .iter()
+        .filter(|item| item.product_id == scarce.id)
+        .map(|item| item.quantity)
+        .sum();
+    assert_eq!(scarce.stock + total, stock(&scarce.id));
+    clear_stock(store);
+}
+
+fn clear_stock(store: &dyn Store) {
     store.products().replace_all(&[]).unwrap();
     store.sales().replace_all(&[]).unwrap();
+    store.movements().replace_all(&[]).unwrap();
+}
+
+fn register(store: &dyn Store, sale: &Sale, allow_negative: bool) -> pos_storage::Result<()> {
+    store.apply_stock(&StockOperation {
+        sale: SaleChange::Register(sale),
+        movements: &StockMovement::of_sale(sale, MovementKind::Venta, "ana"),
+        allow_negative,
+    })
 }

@@ -1,8 +1,8 @@
 use std::collections::HashSet;
 use std::sync::Arc;
 
-use pos_domain::{Client, Sale};
-use pos_storage::Store;
+use pos_domain::{now, Client, MovementKind, Sale, StockMovement};
+use pos_storage::{SaleChange, StockOperation, Store};
 use rust_decimal::Decimal;
 
 use crate::client::matches_contact;
@@ -31,8 +31,30 @@ impl SalesService {
         if sale.items.is_empty() {
             return rule("Agregue productos antes de confirmar");
         }
+        if sale.discount < Decimal::ZERO {
+            return rule("El descuento no puede ser negativo");
+        }
         sale.calculate_totals(tax_rate);
-        self.store.register_sale(&sale, allow_negative)?;
+        if sale.total < Decimal::ZERO {
+            return rule("El descuento supera el total de la venta");
+        }
+        let movements = StockMovement::of_sale(&sale, MovementKind::Venta, &sale.seller);
+        self.store.apply_stock(&StockOperation {
+            sale: SaleChange::Register(&sale),
+            movements: &movements,
+            allow_negative,
+        })?;
+        Ok(sale)
+    }
+
+    pub fn void(&self, mut sale: Sale, author: &str) -> Result<Sale> {
+        sale.voided_at = Some(now());
+        let movements = StockMovement::of_sale(&sale, MovementKind::Anulacion, author);
+        self.store.apply_stock(&StockOperation {
+            sale: SaleChange::Void(&sale),
+            movements: &movements,
+            allow_negative: true,
+        })?;
         Ok(sale)
     }
 }
@@ -62,6 +84,7 @@ pub fn filter<'a>(sales: &'a [Sale], clients: &[Client], filter: &SaleFilter) ->
                     || sale.id.contains(&query)
                     || sale.client_name.to_lowercase().contains(&query)
                     || sale.payment_method.key().contains(&query)
+                    || sale.seller.to_lowercase().contains(&query)
                     || sale.notes.to_lowercase().contains(&query)
                     || owners.contains(sale.client_id.as_str()))
         })

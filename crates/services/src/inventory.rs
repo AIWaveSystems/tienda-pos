@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use pos_domain::{now, Product};
-use pos_storage::Store;
+use pos_domain::{now, Product, StockMovement};
+use pos_storage::{SaleChange, StockOperation, Store};
 use rust_decimal::Decimal;
 
 use crate::error::rule;
@@ -46,19 +46,47 @@ impl InventoryService {
         {
             return rule(format!("El codigo ya pertenece a '{}'", other.name));
         }
+        if let Some(current) = others.iter().find(|other| other.id == item.id) {
+            item.stock = current.stock;
+        }
         item.updated_at = now();
         self.store.products().upsert(&item)?;
         Ok(item)
     }
 
-    pub fn adjust_stock(&self, id: &str, delta: i64) -> Result<Option<Product>> {
-        let Some(mut product) = self.find(id)? else {
-            return Ok(None);
+    pub fn adjust_stock(
+        &self,
+        product: &Product,
+        delta: i64,
+        reason: &str,
+        author: &str,
+    ) -> Result<()> {
+        if delta == 0 {
+            return rule("Ingrese una cantidad distinta de cero");
+        }
+        if reason.trim().is_empty() {
+            return rule("Escriba el motivo del ajuste");
+        }
+        let movement = StockMovement {
+            product_id: product.id.clone(),
+            product_name: product.name.clone(),
+            quantity: delta,
+            reference: reason.trim().to_owned(),
+            author: author.to_owned(),
+            ..StockMovement::default()
         };
-        product.stock = (product.stock + delta).max(0);
-        product.updated_at = now();
-        self.store.products().upsert(&product)?;
-        Ok(Some(product))
+        self.store.apply_stock(&StockOperation {
+            sale: SaleChange::None,
+            movements: &[movement],
+            allow_negative: false,
+        })?;
+        Ok(())
+    }
+
+    pub fn movements(&self) -> Result<Vec<StockMovement>> {
+        let mut items = self.store.movements().all()?;
+        items.sort_by_key(|item| std::cmp::Reverse(item.created_at));
+        Ok(items)
     }
 
     pub fn delete(&self, id: &str) -> Result<bool> {
@@ -85,4 +113,16 @@ pub fn search<'a>(
         .collect();
     found.sort_by_key(|product| !product.has_barcode(query));
     found
+}
+
+pub fn movement_matches(item: &StockMovement, query: &str) -> bool {
+    let query = query.trim().to_lowercase();
+    [
+        item.product_name.as_str(),
+        item.kind.label(),
+        item.reference.as_str(),
+        item.author.as_str(),
+    ]
+    .into_iter()
+    .any(|field| field.to_lowercase().contains(&query))
 }

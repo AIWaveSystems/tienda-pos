@@ -54,7 +54,8 @@ impl ReportService {
     }
 
     pub fn overview(&self, top: usize, days: i64) -> Result<Overview> {
-        let sales = self.store.sales().all()?;
+        let mut sales = self.store.sales().all()?;
+        sales.retain(|sale| !sale.is_voided());
         let products = self.store.products().all()?;
         Ok(Overview {
             sales: summarize(&sales),
@@ -66,7 +67,7 @@ impl ReportService {
 
     pub fn client_summary(&self, client_id: &str) -> Result<SalesSummary> {
         let mut sales = self.store.sales().all()?;
-        sales.retain(|sale| sale.client_id == client_id);
+        sales.retain(|sale| sale.client_id == client_id && !sale.is_voided());
         Ok(summarize(&sales))
     }
 }

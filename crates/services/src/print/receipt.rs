@@ -32,9 +32,10 @@ pub fn receipt(sale: &Sale, config: &AppConfig) -> Document {
         name => name,
     };
     let body = format!(
-        "<h1>Comprobante de venta</h1>\
+        "<h1>{}</h1>\
          <p class='subtitle'>No. {} &nbsp;|&nbsp; {}<br>Cliente: {} &nbsp;|&nbsp; Pago: {}</p>\
          {}{}{}{}",
+        heading(sale),
         escape(&sale.id),
         format::stamp(sale.created_at),
         escape(client),
@@ -46,6 +47,14 @@ pub fn receipt(sale: &Sale, config: &AppConfig) -> Document {
     );
     let name = format!("Comprobante {}", sale.short_id());
     Document::new(&name, &body, config, config.sales.printer_format)
+}
+
+fn heading(sale: &Sale) -> &'static str {
+    if sale.is_voided() {
+        "Comprobante anulado"
+    } else {
+        "Comprobante de venta"
+    }
 }
 
 fn totals(sale: &Sale, currency: &str) -> String {

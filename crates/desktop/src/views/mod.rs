@@ -6,6 +6,7 @@ pub mod dashboard;
 pub mod history;
 pub mod inventory;
 pub mod login;
+pub mod movements;
 pub mod navigation;
 pub mod new_sale;
 pub mod profile;

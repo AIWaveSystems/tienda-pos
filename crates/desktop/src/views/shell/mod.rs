@@ -10,6 +10,7 @@ use crate::views::command_palette::{CommandPalette, PaletteEvent};
 use crate::views::dashboard::DashboardView;
 use crate::views::history::HistoryView;
 use crate::views::inventory::InventoryView;
+use crate::views::movements::MovementsView;
 use crate::views::navigation::Route;
 use crate::views::new_sale::NewSaleView;
 use crate::views::profile::ProfileDialog;
@@ -115,6 +116,7 @@ impl Shell {
             Route::Dashboard => Box::new(DashboardView::new(ctx, env)),
             Route::Inventory => Box::new(InventoryView::new(ctx, env)),
             Route::Categories => Box::new(CategoriesView::new(ctx, env)),
+            Route::Movements => Box::new(MovementsView::new(ctx, env)),
             Route::Clients => Box::new(ClientsView::new(ctx, env)),
             Route::NewSale => Box::new(NewSaleView::new(ctx, env)),
             Route::History => Box::new(HistoryView::new(ctx, env)),

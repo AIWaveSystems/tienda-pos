@@ -4,9 +4,9 @@ use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
 use pos_config::BackendKind;
-use pos_domain::{Category, Client, Entity, Product, Sale, User};
+use pos_domain::{Category, Client, Entity, Product, Sale, StockMovement, User};
 
-use crate::{DocumentStore, Repository, Result, Store};
+use crate::{DocumentStore, Repository, Result, SaleChange, StockOperation, Store};
 
 const INTERVAL: Duration = Duration::from_secs(12);
 
@@ -93,6 +93,7 @@ impl Copier {
             Category::COLLECTION => target.categories().replace_all(&source.categories().all()?),
             Client::COLLECTION => target.clients().replace_all(&source.clients().all()?),
             Product::COLLECTION => target.products().replace_all(&source.products().all()?),
+            StockMovement::COLLECTION => target.movements().replace_all(&source.movements().all()?),
             _ => target.sales().replace_all(&source.sales().all()?),
         }
     }
@@ -107,6 +108,7 @@ pub struct MirroredStore {
     clients: MirroredRepository<Client>,
     products: MirroredRepository<Product>,
     sales: MirroredRepository<Sale>,
+    movements: MirroredRepository<StockMovement>,
 }
 
 impl MirroredStore {
@@ -125,6 +127,7 @@ impl MirroredStore {
             Client::COLLECTION,
             Product::COLLECTION,
             Sale::COLLECTION,
+            StockMovement::COLLECTION,
         ]));
         let copier = Arc::new(Copier {
             primary: primary.clone(),
@@ -138,6 +141,7 @@ impl MirroredStore {
             categories: wrap(&primary, &dirty, |store| store.categories()),
             clients: wrap(&primary, &dirty, |store| store.clients()),
             products: wrap(&primary, &dirty, |store| store.products()),
+            movements: wrap(&primary, &dirty, |store| store.movements()),
             sales: wrap(&primary, &dirty, |store| store.sales()),
             primary,
         }
@@ -169,10 +173,17 @@ impl Store for MirroredStore {
         &self.sales
     }
 
-    fn register_sale(&self, sale: &Sale, allow_negative: bool) -> Result<()> {
-        self.primary.register_sale(sale, allow_negative)?;
+    fn movements(&self) -> &dyn Repository<StockMovement> {
+        &self.movements
+    }
+
+    fn apply_stock(&self, operation: &StockOperation) -> Result<()> {
+        self.primary.apply_stock(operation)?;
         self.products.mark();
-        self.sales.mark();
+        self.movements.mark();
+        if !matches!(operation.sale, SaleChange::None) {
+            self.sales.mark();
+        }
         Ok(())
     }
 

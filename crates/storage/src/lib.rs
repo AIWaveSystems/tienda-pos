@@ -1,5 +1,7 @@
 mod error;
 pub use error::{Result, StorageError};
+mod operation;
+pub use operation::{SaleChange, StockOperation};
 mod repository;
 pub use repository::Repository;
 mod store;

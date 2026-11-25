@@ -10,6 +10,8 @@ pub enum StorageError {
     Conflict(String),
     #[error("No hay existencias suficientes de '{0}'")]
     Stock(String),
+    #[error("La venta ya fue anulada")]
+    AlreadyVoided,
     #[error("Los datos almacenados no son validos: {0}")]
     Data(String),
 }

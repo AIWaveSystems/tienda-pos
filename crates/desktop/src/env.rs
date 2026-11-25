@@ -22,6 +22,21 @@ impl Env {
         self.services.auth.can(permission)
     }
 
+    pub fn author(&self) -> String {
+        self.services
+            .auth
+            .current()
+            .map(|user| user.full_name)
+            .unwrap_or_default()
+    }
+
+    pub fn is_admin(&self) -> bool {
+        self.services
+            .auth
+            .current()
+            .is_some_and(|user| user.is_admin())
+    }
+
     pub fn info(&mut self, title: &str, text: impl Into<String>) {
         self.notices.push(Notice::info(title, text));
     }

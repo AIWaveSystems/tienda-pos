@@ -61,7 +61,13 @@ impl View for DashboardView {
 }
 
 fn render(ui: &mut Ui, summary: &Summary, env: &Env) {
-    let revenue = report::summarize(&summary.sales).total;
+    let active: Vec<Sale> = summary
+        .sales
+        .iter()
+        .filter(|sale| !sale.is_voided())
+        .cloned()
+        .collect();
+    let revenue = report::summarize(&active).total;
     card::stats(
         ui,
         &[
@@ -71,7 +77,7 @@ fn render(ui: &mut Ui, summary: &Summary, env: &Env) {
                 theme::ACCENT,
             ),
             ("Clientes", summary.clients.to_string(), theme::SUCCESS),
-            ("Ventas", summary.sales.len().to_string(), theme::WARNING),
+            ("Ventas", active.len().to_string(), theme::WARNING),
             (
                 "Ingresos",
                 format::money(revenue, &env.config.general.currency),
