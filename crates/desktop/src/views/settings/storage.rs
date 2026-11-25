@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use eframe::egui::{Color32, Context, RichText, Ui};
 use pos_config::{AppConfig, BackendKind, ConfigError, Credentials};
 use pos_storage::cloud::CloudAccount;
@@ -27,6 +29,7 @@ pub struct StoragePanel {
     tested: Option<(BackendKind, Connection)>,
     testing: Option<(Connection, Task<()>)>,
     linking: Option<Task<CloudAccount>>,
+    saving: Option<Task<PathBuf>>,
     status: (String, Color32),
 }
 
@@ -44,6 +47,7 @@ impl StoragePanel {
             tested: None,
             testing: None,
             linking: None,
+            saving: None,
             status: (String::new(), theme::palette().muted),
         };
         panel.reset(env);
@@ -199,6 +203,7 @@ impl StoragePanel {
                 ui.label(path.display().to_string());
             });
         }
+        self.backup(ui, env);
         title::heading(ui, "Motor de almacenamiento");
         let labels: Vec<String> = BackendKind::ALL
             .iter()
@@ -228,6 +233,30 @@ impl StoragePanel {
                 .small()
                 .color(theme::palette().warning),
         );
+    }
+
+    fn backup(&mut self, ui: &mut Ui, env: &mut Env) {
+        title::heading(ui, "Copia de seguridad");
+        title::hint(
+            ui,
+            "Guarda todos los datos actuales en una carpeta JSON con fecha.",
+        );
+        match Task::poll(&mut self.saving) {
+            Some(Ok(path)) => env.toast(format!("Copia creada en {}", path.display())),
+            Some(Err(failure)) => env.warn("Copia de seguridad", failure),
+            None => {}
+        }
+        let idle = self.saving.is_none();
+        let clicked = ui
+            .add_enabled_ui(idle, |ui| button::plain(ui, "Crear copia..."))
+            .inner;
+        if !clicked {
+            return;
+        }
+        if let Some(folder) = rfd::FileDialog::new().pick_folder() {
+            let services = env.services.clone();
+            self.saving = Some(Task::spawn(ui.ctx(), move || services.backup(&folder)));
+        }
     }
 
     fn database(&mut self, ui: &mut Ui, env: &Env) {
